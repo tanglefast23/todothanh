@@ -2,31 +2,16 @@
 
 import { memo, useState, useEffect, useCallback } from "react";
 import { Monitor, Smartphone } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useShallow } from "zustand/react/shallow";
-import { useSettingsStore, type ActiveView } from "@/stores/settingsStore";
+import { useSettingsStore } from "@/stores/settingsStore";
 import { cn } from "@/lib/utils";
 import { playClickSound } from "@/lib/audio";
-
-// Mapping between desktop routes and mobile views
-const ROUTE_TO_MOBILE_VIEW: Record<string, ActiveView> = {
-  "/tasks": "home",
-  "/running-tab": "watchlist",
-  "/settings": "add",
-};
-
-const MOBILE_VIEW_TO_ROUTE: Record<ActiveView, string> = {
-  home: "/tasks",
-  watchlist: "/running-tab",
-  add: "/settings",
-};
 
 interface MobileToggleProps {
   className?: string;
   size?: "sm" | "md";
 }
 
-/** Toggle between mobile and desktop view modes */
+/** Toggle between mobile and desktop view modes - stays on current page */
 export const MobileToggle = memo(function MobileToggle({
   className,
   size = "md",
@@ -37,38 +22,14 @@ export const MobileToggle = memo(function MobileToggle({
     setIsMounted(true);
   }, []);
 
-  const pathname = usePathname();
-  const router = useRouter();
-
-  // Use useShallow to batch subscriptions and prevent unnecessary re-renders
-  const { mobileMode, activeView, setMobileMode, setActiveView } = useSettingsStore(
-    useShallow((state) => ({
-      mobileMode: state.mobileMode,
-      activeView: state.activeView,
-      setMobileMode: state.setMobileMode,
-      setActiveView: state.setActiveView,
-    }))
-  );
+  const mobileMode = useSettingsStore((state) => state.mobileMode);
+  const setMobileMode = useSettingsStore((state) => state.setMobileMode);
 
   const handleToggle = useCallback(() => {
     playClickSound();
-
-    if (mobileMode === "mobile") {
-      // Switching from mobile to desktop: navigate to equivalent route
-      const targetRoute = MOBILE_VIEW_TO_ROUTE[activeView] || "/tasks";
-      setMobileMode("desktop");
-      router.push(targetRoute);
-    } else {
-      // Switching from desktop to mobile: set activeView based on current route
-      const targetView = ROUTE_TO_MOBILE_VIEW[pathname] || "home";
-      setActiveView(targetView);
-      setMobileMode("mobile");
-      // Navigate to tasks which is the main page in mobile mode
-      if (pathname !== "/tasks") {
-        router.push("/tasks");
-      }
-    }
-  }, [mobileMode, activeView, pathname, router, setMobileMode, setActiveView]);
+    // Simply toggle between mobile and desktop - no navigation
+    setMobileMode(mobileMode === "mobile" ? "desktop" : "mobile");
+  }, [mobileMode, setMobileMode]);
 
   // Use default "desktop" on server, actual value after mount
   const displayMode = isMounted ? mobileMode : "desktop";
