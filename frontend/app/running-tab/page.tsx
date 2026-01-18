@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useOwnerStore } from "@/stores/ownerStore";
@@ -176,22 +176,12 @@ export default function RunningTabPage() {
           {/* Main Content - only show if initialized */}
           {isTabInitialized && (
             <>
-              {/* Balance Display - no card, just giant number */}
-              <div className="relative">
-                <BalanceDisplay amount={tab.currentBalance} />
-                {/* Admin edit button */}
-                {isMaster && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-2 right-2 text-muted-foreground hover:text-foreground"
-                    onClick={openAdjustModal}
-                    title="Adjust balance"
-                  >
-                    <Pencil className="h-5 w-5" />
-                  </Button>
-                )}
-              </div>
+              {/* Balance Display - double-tap to edit (master only) */}
+              <BalanceDisplay
+                amount={tab.currentBalance}
+                canEdit={isMaster}
+                onEdit={openAdjustModal}
+              />
 
               {/* Add Expense Button */}
               <div className="flex justify-center">
