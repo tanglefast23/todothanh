@@ -3,8 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, Moon, RefreshCw, Sun, User, ShieldCheck, Settings, Table2, DollarSign } from "lucide-react";
-import { useTheme } from "next-themes";
+import { LogOut, RefreshCw, User, ShieldCheck, Settings, Table2, DollarSign } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -58,7 +57,6 @@ const AVATAR_COLORS = [
 ];
 
 export function Header() {
-  const { setTheme } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -180,30 +178,6 @@ export function Header() {
           <Settings className="h-5 w-5 transition-transform duration-300 group-hover:rotate-45" />
           <span className="sr-only">Settings</span>
         </Button>
-
-        {/* Theme Toggle - only render after mount to avoid Radix hydration mismatch */}
-        {isMounted && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="group">
-                <Sun className="h-5 w-5 rotate-0 scale-100 transition-all duration-300 group-hover:rotate-12 dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all duration-300 group-hover:-rotate-12 dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => setTheme("light")}>
-                Light
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("dark")}>
-                Dark
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => setTheme("system")}>
-                System
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
 
         {/* Owner Profile (Local Auth) */}
         {isMounted && activeOwnerId && (
