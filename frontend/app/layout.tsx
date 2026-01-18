@@ -4,6 +4,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { QueryProvider } from "@/components/providers/QueryProvider";
+import { SupabaseSyncProvider } from "@/components/providers/SupabaseSyncProvider";
 import { SidebarProvider } from "@/components/layout/SidebarContext";
 import { MobileAwareLayout } from "@/components/layout/MobileAwareLayout";
 // TooltipProvider removed - all Radix tooltips replaced with native title attributes
@@ -35,7 +36,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <QueryProvider>
-          <ThemeProvider>
+          <SupabaseSyncProvider>
+            <ThemeProvider>
             {/* Skip link for keyboard navigation - WCAG 2.4.1 */}
             <a
               href="#main-content"
@@ -46,7 +48,8 @@ export default function RootLayout({
             <SidebarProvider>
               <MobileAwareLayout>{children}</MobileAwareLayout>
             </SidebarProvider>
-          </ThemeProvider>
+            </ThemeProvider>
+          </SupabaseSyncProvider>
         </QueryProvider>
       </body>
     </html>

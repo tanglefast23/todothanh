@@ -30,6 +30,61 @@ import type { Task } from "@/types/tasks";
 import type { Tag } from "@/types/dashboard";
 import type { Owner } from "@/types/owner";
 import type { AppPermissions, RunningTab, Expense, TabHistoryEntry } from "@/types/runningTab";
+import type { Database } from "@/types/database";
+
+// Database row types for conversions
+type OwnerRow = Database["public"]["Tables"]["owners"]["Row"];
+type OwnerInsert = Database["public"]["Tables"]["owners"]["Insert"];
+type TagRow = Database["public"]["Tables"]["tags"]["Row"];
+type TagInsert = Database["public"]["Tables"]["tags"]["Insert"];
+
+/**
+ * Convert database owner row to app Owner type
+ */
+function ownerRowToApp(row: OwnerRow): Owner {
+  return {
+    id: row.id,
+    name: row.name,
+    passwordHash: row.password_hash,
+    createdAt: row.created_at,
+    isMaster: row.is_master,
+  };
+}
+
+/**
+ * Convert app Owner type to database insert format
+ */
+function ownerAppToInsert(owner: Owner): OwnerInsert {
+  return {
+    id: owner.id,
+    name: owner.name,
+    password_hash: owner.passwordHash,
+    created_at: owner.createdAt,
+    is_master: owner.isMaster ?? false,
+  };
+}
+
+/**
+ * Convert database tag row to app Tag type
+ */
+function tagRowToApp(row: TagRow): Tag {
+  return {
+    id: row.id,
+    name: row.name,
+    color: row.color,
+  };
+}
+
+/**
+ * Convert app Tag type to database insert format
+ */
+function tagAppToInsert(tag: Tag): TagInsert {
+  return {
+    id: tag.id,
+    name: tag.name,
+    color: tag.color,
+  };
+}
 
 /**
  * Performs the initial load from Supabase, applying cloud-as-source-of-truth logic.
@@ -45,8 +100,8 @@ export async function performInitialLoad(): Promise<void> {
   // Fetch all data from Supabase in parallel with retry logic
   const [
     cloudTasks,
-    cloudTags,
-    cloudOwners,
+    cloudTagRows,
+    cloudOwnerRows,
     cloudPermissions,
     cloudRunningTab,
     cloudExpenses,
@@ -60,6 +115,10 @@ export async function performInitialLoad(): Promise<void> {
     retryWithBackoff(() => fetchAllExpenses(), 3, "fetchAllExpenses"),
     retryWithBackoff(() => fetchTabHistory(), 3, "fetchTabHistory"),
   ]);
+
+  // Convert database rows to app types
+  const cloudTags = cloudTagRows?.map(tagRowToApp);
+  const cloudOwners = cloudOwnerRows?.map(ownerRowToApp);
 
   // Get local state from stores
   const localTasks = useTasksStore.getState().tasks;
@@ -84,23 +143,23 @@ export async function performInitialLoad(): Promise<void> {
   // Sync Tags
   await syncDataType<Tag[]>({
     name: "tags",
-    cloudData: cloudTags as Tag[] | undefined,
+    cloudData: cloudTags,
     localData: localTags,
     hasCloudData: (data) => Array.isArray(data) && data.length > 0,
     hasLocalData: (data) => Array.isArray(data) && data.length > 0,
     updateLocal: (data) => useTagsStore.getState().setTags(data),
-    pushToCloud: (data) => syncTags(data),
+    pushToCloud: (data) => syncTags(data.map(tagAppToInsert)),
   });
 
   // Sync Owners
   await syncDataType<Owner[]>({
     name: "owners",
-    cloudData: cloudOwners as Owner[] | undefined,
+    cloudData: cloudOwners,
     localData: localOwners,
     hasCloudData: (data) => Array.isArray(data) && data.length > 0,
     hasLocalData: (data) => Array.isArray(data) && data.length > 0,
     updateLocal: (data) => useOwnerStore.getState().setOwners(data),
-    pushToCloud: (data) => syncOwners(data),
+    pushToCloud: (data) => syncOwners(data.map(ownerAppToInsert)),
   });
 
   // Sync Permissions (requires conversion between formats)
@@ -177,8 +236,9 @@ async function syncDataType<T>(config: SyncDataTypeConfig<T>): Promise<void> {
 /**
  * Special handling for permissions due to format conversion
  *
- * DB format: array of { id, owner_id, can_complete_tasks, can_approve_expenses, updated_at }
- * Store format: Record<string, AppPermissions> where key is owner_id
+ * DB format: array of { id, ownerId, canCompleteTasks, canApproveExpenses, updatedAt }
+ *   (already converted to camelCase by the query's rowToPermissions converter)
+ * Store format: Record<string, AppPermissions> where key is ownerId
  */
 async function syncPermissionsData(
   cloudPermissions: AppPermissions[] | undefined,

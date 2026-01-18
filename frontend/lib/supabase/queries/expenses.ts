@@ -21,6 +21,7 @@ function rowToExpense(row: ExpenseRow): Expense {
     approvedAt: row.approved_at,
     status: row.status,
     attachmentUrl: row.attachment_url,
+    rejectionReason: row.rejection_reason,
     updatedAt: row.updated_at,
   };
 }
@@ -37,6 +38,7 @@ function expenseToInsert(expense: Omit<Expense, "id"> & { id?: string }): Expens
     approved_at: expense.approvedAt,
     status: expense.status,
     attachment_url: expense.attachmentUrl,
+    rejection_reason: expense.rejectionReason,
     updated_at: expense.updatedAt,
   };
 }
@@ -51,6 +53,7 @@ function expenseToUpdate(expense: Partial<Expense>): ExpenseUpdate {
   if (expense.approvedAt !== undefined) update.approved_at = expense.approvedAt;
   if (expense.status !== undefined) update.status = expense.status;
   if (expense.attachmentUrl !== undefined) update.attachment_url = expense.attachmentUrl;
+  if (expense.rejectionReason !== undefined) update.rejection_reason = expense.rejectionReason;
   if (expense.updatedAt !== undefined) update.updated_at = expense.updatedAt;
   return update;
 }

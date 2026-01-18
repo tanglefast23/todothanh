@@ -550,6 +550,7 @@ export interface Database {
           approved_at: string | null;
           status: "pending" | "approved" | "rejected";
           attachment_url: string | null;
+          rejection_reason: string | null;
           updated_at: string;
         };
         Insert: {
@@ -562,6 +563,7 @@ export interface Database {
           approved_at?: string | null;
           status?: "pending" | "approved" | "rejected";
           attachment_url?: string | null;
+          rejection_reason?: string | null;
           updated_at?: string;
         };
         Update: {
@@ -574,6 +576,7 @@ export interface Database {
           approved_at?: string | null;
           status?: "pending" | "approved" | "rejected";
           attachment_url?: string | null;
+          rejection_reason?: string | null;
           updated_at?: string;
         };
       };
