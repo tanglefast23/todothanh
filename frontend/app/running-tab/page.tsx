@@ -102,14 +102,6 @@ export default function RunningTabPage() {
 
       <main className="flex-1 p-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          {/* Page Header */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold">Running Tab</h1>
-            <p className="text-muted-foreground mt-2">
-              Track household expenses and manage your shared balance
-            </p>
-          </div>
-
           {/* Show Initialize Form if not initialized (master only) */}
           {!isTabInitialized && isMaster && (
             <InitializeBalanceForm onInitialize={handleInitialize} />
