@@ -7,7 +7,7 @@
 import { useState, useEffect } from "react";
 import { useSettingsStore } from "@/stores/settingsStore";
 
-const MOBILE_BREAKPOINT = 640; // Tailwind's 'sm' breakpoint
+const MOBILE_BREAKPOINT = 768; // Tailwind's 'md' breakpoint - matches Header nav
 
 export function useMobileMode() {
   const mobileMode = useSettingsStore((state) => state.mobileMode);
