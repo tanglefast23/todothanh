@@ -183,6 +183,9 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
     setShowNewPassword(false);
   }, []);
 
+  // Check if this will be the first account (admin)
+  const isFirstAccount = owners.length === 0;
+
   const handleCreateAccount = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -191,15 +194,27 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
       return;
     }
 
+    // First account (admin) requires a password
+    if (isFirstAccount) {
+      if (!newPassword.trim()) {
+        setCreateError("Admin account requires a password");
+        return;
+      }
+      if (newPassword.length < 4) {
+        setCreateError("Password must be at least 4 characters");
+        return;
+      }
+    }
+
     setIsCreating(true);
     setCreateError(null);
 
     try {
-      // Create new account - NEVER as master (master accounts already exist in Supabase)
-      // Non-admin accounts don't need passwords - just tap to login
-      const newId = await addOwner(newName.trim(), "", false);
-      // Auto-login as the new user (no password needed for non-admin)
-      await login(newId, "");
+      // First account becomes admin with password, others are passwordless
+      const password = isFirstAccount ? newPassword : "";
+      const newId = await addOwner(newName.trim(), password, false);
+      // Auto-login as the new user
+      await login(newId, password);
       playLoginSuccess();
       onLoginSuccess();
     } catch {
@@ -207,7 +222,7 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
     } finally {
       setIsCreating(false);
     }
-  }, [newName, addOwner, login, onLoginSuccess]);
+  }, [newName, newPassword, isFirstAccount, addOwner, login, onLoginSuccess]);
 
   // Right-click handler
   const handleContextMenu = useCallback((e: React.MouseEvent, owner: Owner) => {
@@ -543,10 +558,12 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
               <div className="w-10 h-10 rounded-full flex items-center justify-center bg-primary/20 text-primary">
                 <Plus className="h-5 w-5" />
               </div>
-              <span>Create New Account</span>
+              <span>{isFirstAccount ? "Create Admin Account" : "Create New Account"}</span>
             </DialogTitle>
             <DialogDescription>
-              Enter your name to create an account.
+              {isFirstAccount
+                ? "This will be the admin account. Enter a name and password."
+                : "Enter your name to create an account."}
             </DialogDescription>
           </DialogHeader>
 
@@ -566,6 +583,34 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
                   className={cn(createError && !newName.trim() && "border-destructive")}
                 />
               </div>
+              {/* Password field only for first account (admin) */}
+              {isFirstAccount && (
+                <div className="relative">
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => {
+                      setNewPassword(e.target.value);
+                      setCreateError(null);
+                    }}
+                    placeholder="Choose a password"
+                    disabled={isCreating}
+                    className={cn(createError && !newPassword.trim() && "border-destructive")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    tabIndex={-1}
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+              )}
               {createError && (
                 <p className="text-sm text-destructive">{createError}</p>
               )}
@@ -587,7 +632,7 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
                     Creating...
                   </>
                 ) : (
-                  "Create Account"
+                  isFirstAccount ? "Create Admin" : "Create Account"
                 )}
               </Button>
             </DialogFooter>
