@@ -15,12 +15,17 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-focus input on mount (desktop only - textarea handles mobile)
+  // Auto-focus input on mount
   useEffect(() => {
-    // Focus desktop input on larger screens
-    if (window.innerWidth >= 768) {
-      inputRef.current?.focus();
-    }
+    // Small delay to ensure DOM is ready after hydration
+    const timer = setTimeout(() => {
+      if (window.innerWidth >= 768) {
+        inputRef.current?.focus();
+      } else {
+        textareaRef.current?.focus();
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   // Create task with specified priority
