@@ -264,27 +264,34 @@ export function AddExpenseModal({
 
 /**
  * Parse bulk input text into expense entries.
- * Format: "Name, Amount, Name, Amount, ..."
- * or "Name, Amount\nName, Amount"
+ * Smart format: "name amount, name amount, ..."
+ * The amount is detected as the first number sequence in each item.
+ * Examples:
+ *   "coffee 50000, lunch 100000" → 2 items
+ *   "coffee50000, lunch100000" → 2 items (no space needed)
+ *   "gas station 75000" → name: "gas station", amount: 75000
  */
 function parseBulkInput(text: string): { name: string; amount: number }[] {
-  // Normalize: replace newlines with commas, then split
+  // Normalize: replace newlines with commas, then split by comma
   const normalized = text.replace(/\n/g, ",");
-  const parts = normalized.split(",").map((p) => p.trim()).filter(Boolean);
+  const items = normalized.split(",").map((p) => p.trim()).filter(Boolean);
 
   const entries: { name: string; amount: number }[] = [];
 
-  for (let i = 0; i < parts.length - 1; i += 2) {
-    const name = parts[i];
-    const amountStr = parts[i + 1];
+  for (const item of items) {
+    // Find where the number starts (the amount)
+    // Match: any text followed by a number sequence at the end
+    const match = item.match(/^(.+?)[\s]*(\d[\d\s.,]*)$/);
 
-    if (!name || !amountStr) continue;
+    if (match) {
+      const name = match[1].trim();
+      // Remove any non-numeric characters from the amount (spaces, dots, commas)
+      const amountStr = match[2].replace(/[^0-9]/g, "");
+      const amount = parseInt(amountStr, 10);
 
-    // Parse amount (remove any non-numeric characters)
-    const amount = parseInt(amountStr.replace(/[^0-9]/g, ""), 10);
-
-    if (name.trim() && amount > 0) {
-      entries.push({ name: name.trim(), amount });
+      if (name && amount > 0) {
+        entries.push({ name, amount });
+      }
     }
   }
 
