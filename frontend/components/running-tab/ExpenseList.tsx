@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import type { Expense, ExpenseWithOwner } from "@/types/runningTab";
 import { ExpenseItem } from "./ExpenseItem";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ExpenseListProps {
   expenses: Expense[];
@@ -60,49 +61,66 @@ export function ExpenseList({
     <div className="space-y-6">
       {/* Pending Section */}
       {pending.length > 0 && (
-        <ExpenseSection
-          title="Pending Approval"
-          count={pending.length}
-          expenses={pending}
-          canApprove={canApprove}
-          onApprove={onApprove}
-          onReject={onReject}
-          onAttachment={onAttachment}
-        />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Pending ({pending.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseSection
+              expenses={pending}
+              canApprove={canApprove}
+              onApprove={onApprove}
+              onReject={onReject}
+              onAttachment={onAttachment}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Approved Section */}
       {approved.length > 0 && (
-        <ExpenseSection
-          title="Approved"
-          count={approved.length}
-          expenses={approved}
-          canApprove={canApprove}
-          onApprove={onApprove}
-          onReject={onReject}
-          onAttachment={onAttachment}
-        />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-green-600 dark:text-green-400">
+              Approved ({approved.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseSection
+              expenses={approved}
+              canApprove={canApprove}
+              onApprove={onApprove}
+              onReject={onReject}
+              onAttachment={onAttachment}
+            />
+          </CardContent>
+        </Card>
       )}
 
       {/* Rejected Section */}
       {rejected.length > 0 && (
-        <ExpenseSection
-          title="Rejected"
-          count={rejected.length}
-          expenses={rejected}
-          canApprove={canApprove}
-          onApprove={onApprove}
-          onReject={onReject}
-          onAttachment={onAttachment}
-        />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg text-red-600 dark:text-red-400">
+              Rejected ({rejected.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ExpenseSection
+              expenses={rejected}
+              canApprove={canApprove}
+              onApprove={onApprove}
+              onReject={onReject}
+              onAttachment={onAttachment}
+            />
+          </CardContent>
+        </Card>
       )}
     </div>
   );
 }
 
 interface ExpenseSectionProps {
-  title: string;
-  count: number;
   expenses: ExpenseWithOwner[];
   canApprove: boolean;
   onApprove: (id: string) => void;
@@ -111,35 +129,30 @@ interface ExpenseSectionProps {
 }
 
 function ExpenseSection({
-  title,
-  count,
   expenses,
   canApprove,
   onApprove,
   onReject,
   onAttachment,
 }: ExpenseSectionProps) {
+  const count = expenses.length;
+
   return (
-    <div>
-      <h3 className="text-sm font-medium text-muted-foreground mb-3">
-        {title} ({count})
-      </h3>
-      <div className="space-y-3">
-        {expenses.map((expense, index) => (
-          <ExpenseItem
-            key={expense.id}
-            expense={expense}
-            creatorName={expense.creatorName}
-            approverName={expense.approverName}
-            canApprove={canApprove}
-            onApprove={onApprove}
-            onReject={onReject}
-            onAttachment={onAttachment}
-            itemNumber={index + 1}
-            showNumber={count > 1}
-          />
-        ))}
-      </div>
+    <div className="space-y-3">
+      {expenses.map((expense, index) => (
+        <ExpenseItem
+          key={expense.id}
+          expense={expense}
+          creatorName={expense.creatorName}
+          approverName={expense.approverName}
+          canApprove={canApprove}
+          onApprove={onApprove}
+          onReject={onReject}
+          onAttachment={onAttachment}
+          itemNumber={index + 1}
+          showNumber={count > 1}
+        />
+      ))}
     </div>
   );
 }

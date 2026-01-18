@@ -197,27 +197,15 @@ export default function RunningTabPage() {
                 />
               </div>
 
-              {/* Expense List */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Expenses</CardTitle>
-                  <CardDescription>
-                    {userCanApprove
-                      ? "Review and approve/reject expenses"
-                      : "Your expenses and their approval status"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ExpenseList
-                    expenses={expenses}
-                    owners={ownerList}
-                    canApprove={userCanApprove}
-                    onApprove={handleApprove}
-                    onReject={handleReject}
-                    onAttachment={handleAttachment}
-                  />
-                </CardContent>
-              </Card>
+              {/* Expense List - each section has its own card */}
+              <ExpenseList
+                expenses={expenses}
+                owners={ownerList}
+                canApprove={userCanApprove}
+                onApprove={handleApprove}
+                onReject={handleReject}
+                onAttachment={handleAttachment}
+              />
 
               {/* Tab History */}
               <TabHistory history={history} owners={ownerList} />
