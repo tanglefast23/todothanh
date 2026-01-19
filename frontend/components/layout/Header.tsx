@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LogOut, RefreshCw, User, ShieldCheck, Settings, Table2, DollarSign } from "lucide-react";
+import { LogOut, RefreshCw, User, ShieldCheck, Settings, Table2, DollarSign, PenLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { title: "Tasks", href: "/tasks", icon: Table2 },
   { title: "Running Tab", href: "/running-tab", icon: DollarSign },
+  { title: "Entry", href: "/entry", icon: PenLine, masterOnly: true },
 ];
 
 // Profile pictures for known users (case-insensitive match)
@@ -61,12 +62,13 @@ export function Header() {
   const pathname = usePathname();
 
   // Owner state - combined with useShallow to reduce subscriptions
-  const { owners, getActiveOwnerId, getActiveOwner, isGuest, logout } = useOwnerStore(
+  const { owners, getActiveOwnerId, getActiveOwner, isGuest, isMasterLoggedIn, logout } = useOwnerStore(
     useShallow((state) => ({
       owners: state.owners,
       getActiveOwnerId: state.getActiveOwnerId,
       getActiveOwner: state.getActiveOwner,
       isGuest: state.isGuest,
+      isMasterLoggedIn: state.isMasterLoggedIn,
       logout: state.logout,
     }))
   );
@@ -80,6 +82,7 @@ export function Header() {
   const activeOwner = isMounted ? getActiveOwner() : null;
   const isGuestUser = isMounted ? isGuest() : false;
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
+  const isMaster = isMounted ? isMasterLoggedIn() : false;
 
   // Sort owners same way as AccountSelector: master first, then alphabetically
   const sortedOwners = useMemo(() => {
@@ -128,24 +131,26 @@ export function Header() {
         <Link href="/tasks" className="mr-2">
           <Logo size="md" />
         </Link>
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
-                isActive
-                  ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-400/30"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              )}
-            >
-              <item.icon className="h-4 w-4" />
-              <span>{item.title}</span>
-            </Link>
-          );
-        })}
+        {navItems
+          .filter((item) => !item.masterOnly || isMaster)
+          .map((item) => {
+            const isActive = pathname === item.href;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  isActive
+                    ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-400/30"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                <span>{item.title}</span>
+              </Link>
+            );
+          })}
       </nav>
 
       {/* Right: Controls */}
