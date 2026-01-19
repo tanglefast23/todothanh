@@ -23,9 +23,9 @@ import { cn } from "@/lib/utils";
 
 // Navigation items for the header (Settings moved to right side as icon)
 const navItems = [
+  { title: "Entry", href: "/entry", icon: PenLine, masterOnly: true },
   { title: "Tasks", href: "/tasks", icon: Table2 },
   { title: "Running Tab", href: "/running-tab", icon: DollarSign },
-  { title: "Entry", href: "/entry", icon: PenLine, masterOnly: true },
 ];
 
 // Profile pictures for known users (case-insensitive match)
