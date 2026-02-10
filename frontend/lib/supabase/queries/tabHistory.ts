@@ -35,15 +35,21 @@ function entryToInsert(entry: Omit<TabHistoryEntry, "id"> & { id?: string }): Ta
   };
 }
 
+/** Maximum number of history entries to load into the client */
+const HISTORY_PAGE_SIZE = 200;
+
 /**
- * Fetch all tab history entries, ordered by most recent first
+ * Fetch tab history entries, ordered by most recent first.
+ * Limited to the most recent HISTORY_PAGE_SIZE entries to prevent
+ * unbounded memory growth in Zustand/localStorage.
  */
 export async function fetchTabHistory(): Promise<TabHistoryEntry[]> {
   const supabase = getSupabaseClient();
   const { data, error } = await supabase
     .from("tab_history")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(HISTORY_PAGE_SIZE);
 
   if (error) {
     console.error("Error fetching tab history:", error);
@@ -51,6 +57,70 @@ export async function fetchTabHistory(): Promise<TabHistoryEntry[]> {
   }
 
   return ((data as TabHistoryRow[]) || []).map(rowToHistoryEntry);
+}
+
+/**
+ * Fetch a page of tab history entries for pagination.
+ * @param offset - Number of entries to skip
+ * @param limit - Number of entries to fetch (default HISTORY_PAGE_SIZE)
+ */
+export async function fetchTabHistoryPage(
+  offset: number,
+  limit: number = HISTORY_PAGE_SIZE
+): Promise<{ entries: TabHistoryEntry[]; hasMore: boolean }> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("tab_history")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit);
+
+  if (error) {
+    console.error("Error fetching tab history page:", error);
+    throw error;
+  }
+
+  const entries = ((data as TabHistoryRow[]) || []).map(rowToHistoryEntry);
+  return { entries, hasMore: entries.length === limit + 1 };
+}
+
+/**
+ * Get the total count of tab history entries.
+ * Useful for showing "200 of 5,432 entries" in the UI.
+ */
+export async function fetchTabHistoryCount(): Promise<number> {
+  const supabase = getSupabaseClient();
+  const { count, error } = await supabase
+    .from("tab_history")
+    .select("*", { count: "exact", head: true });
+
+  if (error) {
+    console.error("Error fetching tab history count:", error);
+    throw error;
+  }
+
+  return count ?? 0;
+}
+
+/**
+ * Archive old history entries by deleting entries older than the given date.
+ * Returns the number of entries deleted.
+ * The current balance is not affected since it's stored separately.
+ */
+export async function archiveOldHistory(olderThan: string): Promise<number> {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("tab_history")
+    .delete()
+    .lt("created_at", olderThan)
+    .select("id");
+
+  if (error) {
+    console.error("Error archiving old history:", error);
+    throw error;
+  }
+
+  return data?.length ?? 0;
 }
 
 /**
