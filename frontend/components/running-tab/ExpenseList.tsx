@@ -121,7 +121,7 @@ export function ExpenseList({
         {pending.length > 0 && (
           <Card className="border-2 border-amber-400/40 bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-yellow-500/10 shadow-lg shadow-amber-500/5 overflow-hidden">
             <CardHeader className="pb-3 border-b border-amber-400/10">
-              <CardTitle className="text-lg text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-yellow-400 flex items-center justify-between font-bold tracking-tight">
+              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-amber-400 to-yellow-400 flex items-center justify-between font-bold tracking-tight">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                   <span>Pending</span>
@@ -177,7 +177,7 @@ export function ExpenseList({
               className="pb-3 cursor-pointer select-none border-b border-emerald-400/10 hover:bg-emerald-500/5 transition-colors"
               onClick={() => setApprovedExpanded(!approvedExpanded)}
             >
-              <CardTitle className="text-lg text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-400 flex items-center justify-between font-bold tracking-tight">
+              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-400 to-green-400 flex items-center justify-between font-bold tracking-tight">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-400" />
                   <span>Approved</span>
@@ -212,7 +212,7 @@ export function ExpenseList({
               className="pb-3 cursor-pointer select-none border-b border-red-400/10 hover:bg-red-500/5 transition-colors"
               onClick={() => setRejectedExpanded(!rejectedExpanded)}
             >
-              <CardTitle className="text-lg text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-rose-400 flex items-center justify-between font-bold tracking-tight">
+              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-400 to-rose-400 flex items-center justify-between font-bold tracking-tight">
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-red-400" />
                   <span>Rejected</span>

@@ -129,8 +129,8 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDi
                 "text-4xl sm:text-5xl md:text-6xl font-black tracking-tight select-none tabular-nums",
                 "transition-all duration-300",
                 isPositive
-                  ? "text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-400"
-                  : "text-transparent bg-clip-text bg-gradient-to-r from-red-300 via-red-400 to-rose-400",
+                  ? "text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-400"
+                  : "text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-300 via-red-400 to-rose-400",
                 canEdit && "group-hover:scale-[1.02] group-active:scale-[0.98]"
               )}
             >
