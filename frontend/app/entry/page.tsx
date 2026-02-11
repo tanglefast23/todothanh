@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/Header";
 import { AddTaskForm } from "@/components/tasks/AddTaskForm";
 import { ScheduleTaskForm } from "@/components/tasks/ScheduleTaskForm";
@@ -12,8 +11,6 @@ import { useOwnerStore } from "@/stores/ownerStore";
 import type { TaskPriority } from "@/types/tasks";
 
 export default function EntryPage() {
-  const router = useRouter();
-
   // Redirect to login if not authenticated
   const { isLoading: isAuthLoading, isAuthenticated } = useAuthGuard();
 

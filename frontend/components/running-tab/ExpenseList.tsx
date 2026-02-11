@@ -232,7 +232,7 @@ export function ExpenseList({
           <DialogHeader>
             <DialogTitle>Reject Expense</DialogTitle>
             <DialogDescription>
-              Please provide a reason for rejecting "{rejectExpenseName}".
+              Please provide a reason for rejecting &quot;{rejectExpenseName}&quot;.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleRejectConfirm} className="space-y-4">

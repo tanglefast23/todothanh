@@ -141,6 +141,24 @@ export async function deleteCompletedExpenses(): Promise<void> {
   }
 }
 
+/**
+ * Delete completed expenses whose approved_at is before the cutoff date.
+ * Used for automatic monthly cleanup.
+ */
+export async function deleteExpiredCompletedExpenses(cutoffDate: string): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase
+    .from("expenses")
+    .delete()
+    .in("status", ["approved", "rejected"])
+    .lt("approved_at", cutoffDate);
+
+  if (error) {
+    console.error("Error deleting expired completed expenses:", error);
+    throw error;
+  }
+}
+
 export async function upsertExpenses(expenses: Expense[]): Promise<void> {
   if (expenses.length === 0) return;
 

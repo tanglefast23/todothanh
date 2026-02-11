@@ -13,6 +13,7 @@ import type {
 } from "@/types/runningTab";
 import {
   deleteCompletedExpenses,
+  deleteExpiredCompletedExpenses,
   updateExpense,
   upsertExpenses,
   deleteExpense as deleteExpenseFromSupabase,
@@ -62,6 +63,7 @@ interface RunningTabState {
   setAttachment: (expenseId: string, url: string) => void;
   deleteExpense: (id: string) => void;
   clearCompletedExpenses: () => void;
+  autoCleanExpiredExpenses: () => void;
 
   // Getters
   getTabBalance: () => number;
@@ -473,6 +475,44 @@ export const useRunningTabStore = create<RunningTabState>()(
         // Also delete expenses from Supabase for cross-device sync
         deleteCompletedExpenses().catch((error) => {
           console.error("[Store] Failed to delete completed expenses from Supabase:", error);
+        });
+      },
+
+      autoCleanExpiredExpenses: () => {
+        const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+        const cutoff = new Date(Date.now() - ONE_MONTH_MS);
+        const cutoffISO = cutoff.toISOString();
+
+        const expired = get().expenses.filter(
+          (e) =>
+            (e.status === "approved" || e.status === "rejected") &&
+            e.approvedAt !== null &&
+            e.approvedAt < cutoffISO
+        );
+
+        if (expired.length === 0) return;
+
+        // Collect attachment URLs before removing
+        const attachmentUrls = expired
+          .map((e) => e.attachmentUrl)
+          .filter((url): url is string => url !== null && url.length > 0);
+
+        const expiredIds = new Set(expired.map((e) => e.id));
+
+        set((state) => ({
+          expenses: state.expenses.filter((e) => !expiredIds.has(e.id)),
+        }));
+
+        // Clean up attachments from Supabase Storage
+        if (attachmentUrls.length > 0) {
+          deleteAttachments(attachmentUrls).catch((error) => {
+            console.error("[Store] Failed to delete expired attachments:", error);
+          });
+        }
+
+        // Delete from Supabase DB
+        deleteExpiredCompletedExpenses(cutoffISO).catch((error) => {
+          console.error("[Store] Failed to delete expired expenses from Supabase:", error);
         });
       },
 

@@ -9,10 +9,9 @@
  * - On page unload: flushes all pending syncs
  */
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef } from "react";
 
 // Stores
-import { useTasksStore } from "@/stores/tasksStore";
 import { useTagsStore } from "@/stores/tagsStore";
 import { useOwnerStore } from "@/stores/ownerStore";
 import { usePermissionsStore } from "@/stores/permissionsStore";
@@ -22,12 +21,10 @@ import { useScheduledEventsStore } from "@/stores/scheduledEventsStore";
 // Sync functions
 import {
   performInitialLoad,
-  createSyncTasksToSupabase,
   createSyncTagsToSupabase,
   createSyncOwnersToSupabase,
   createSyncPermissionsToSupabase,
   createSyncRunningTabToSupabase,
-  createSyncExpensesToSupabase,
   createSyncTabHistoryToSupabase,
   createSyncScheduledEventsToSupabase,
   flushAllPendingSyncs,
@@ -51,22 +48,19 @@ export function useSupabaseSync(): void {
   };
 
   // Create debounced sync functions (memoized to avoid recreating on each render)
-  const syncTasks = useRef(createSyncTasksToSupabase(refs));
+  // Tasks and expenses sync disabled — individual actions now sync directly.
   const syncTags = useRef(createSyncTagsToSupabase(refs));
   const syncOwners = useRef(createSyncOwnersToSupabase(refs));
   const syncPermissions = useRef(createSyncPermissionsToSupabase(refs));
   const syncRunningTab = useRef(createSyncRunningTabToSupabase(refs));
-  const syncExpenses = useRef(createSyncExpensesToSupabase(refs));
   const syncTabHistory = useRef(createSyncTabHistoryToSupabase(refs));
   const syncScheduledEvents = useRef(createSyncScheduledEventsToSupabase(refs));
 
   // Subscribe to store changes
-  const tasks = useTasksStore((state) => state.tasks);
   const tags = useTagsStore((state) => state.tags);
   const owners = useOwnerStore((state) => state.owners);
   const permissions = usePermissionsStore((state) => state.permissions);
   const tab = useRunningTabStore((state) => state.tab);
-  const expenses = useRunningTabStore((state) => state.expenses);
   const history = useRunningTabStore((state) => state.history);
   const scheduledEvents = useScheduledEventsStore((state) => state.events);
 

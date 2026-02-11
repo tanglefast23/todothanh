@@ -119,9 +119,7 @@ export function Sidebar() {
     return null;
   }
 
-  // Inline SidebarContent - kept inside component as it uses local state (isCollapsed, setIsOpen)
-  // but we've hoisted NavItem outside which is the heavier component
-  const SidebarContent = () => (
+  const sidebarContent = (
     <div className="flex h-full flex-col">
       {/* Logo */}
       <div className={cn(
@@ -201,7 +199,7 @@ export function Sidebar() {
         )}
         aria-label="Sidebar navigation"
       >
-        <SidebarContent />
+        {sidebarContent}
 
         {/* Collapse toggle button - desktop only */}
         <button

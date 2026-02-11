@@ -44,7 +44,7 @@ export function debounce<TArgs extends unknown[]>(
       const args: TArgs = lastArgs;
       lastArgs = null;
       pendingFlushCallbacks.delete(flush);
-      fn.apply(null, args);
+      fn(...args);
     }
   };
 
@@ -73,7 +73,7 @@ export function debounce<TArgs extends unknown[]>(
         const currentArgs: TArgs = lastArgs;
         lastArgs = null;
         pendingFlushCallbacks.delete(flush);
-        fn.apply(null, currentArgs);
+        fn(...currentArgs);
       }
     }, delay);
   }) as ((...args: TArgs) => void) & { flush: () => void; cancel: () => void };

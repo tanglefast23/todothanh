@@ -63,13 +63,12 @@ export function Header() {
   const pathname = usePathname();
 
   // Owner state - combined with useShallow to reduce subscriptions
-  const { owners, getActiveOwnerId, getActiveOwner, isGuest, isMasterLoggedIn, logout } = useOwnerStore(
+  const { owners, getActiveOwnerId, getActiveOwner, isGuest, logout } = useOwnerStore(
     useShallow((state) => ({
       owners: state.owners,
       getActiveOwnerId: state.getActiveOwnerId,
       getActiveOwner: state.getActiveOwner,
       isGuest: state.isGuest,
-      isMasterLoggedIn: state.isMasterLoggedIn,
       logout: state.logout,
     }))
   );
@@ -83,7 +82,6 @@ export function Header() {
   const activeOwner = isMounted ? getActiveOwner() : null;
   const isGuestUser = isMounted ? isGuest() : false;
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
-  const isMaster = isMounted ? isMasterLoggedIn() : false;
 
   // Sort owners same way as AccountSelector: master first, then alphabetically
   const sortedOwners = useMemo(() => {

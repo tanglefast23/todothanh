@@ -56,7 +56,7 @@ export interface VirtualItem {
  * that renders all items normally.
  */
 export function useVirtualScroll(options: VirtualScrollOptions): VirtualScrollResult {
-  const { count, estimateSize, threshold = VIRTUALIZATION_THRESHOLD, overscan = 5 } = options;
+  const { count, estimateSize, threshold = VIRTUALIZATION_THRESHOLD } = options;
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Check if we should virtualize

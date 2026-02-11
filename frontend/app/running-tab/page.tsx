@@ -48,13 +48,20 @@ export default function RunningTabPage() {
   const adjustBalance = useRunningTabStore((state) => state.adjustBalance);
   const addExpense = useRunningTabStore((state) => state.addExpense);
   const addBulkExpenses = useRunningTabStore((state) => state.addBulkExpenses);
-  const addToBalance = useRunningTabStore((state) => state.addToBalance);
   const approveExpense = useRunningTabStore((state) => state.approveExpense);
   const approveAllPendingExpenses = useRunningTabStore((state) => state.approveAllPendingExpenses);
   const rejectAllPendingExpenses = useRunningTabStore((state) => state.rejectAllPendingExpenses);
   const rejectExpense = useRunningTabStore((state) => state.rejectExpense);
   const setAttachment = useRunningTabStore((state) => state.setAttachment);
   const clearCompletedExpenses = useRunningTabStore((state) => state.clearCompletedExpenses);
+  const autoCleanExpiredExpenses = useRunningTabStore((state) => state.autoCleanExpiredExpenses);
+
+  // Auto-clean expired approved/rejected expenses (older than 1 month)
+  useEffect(() => {
+    if (isMounted) {
+      autoCleanExpiredExpenses();
+    }
+  }, [isMounted, autoCleanExpiredExpenses]);
 
   // Balance adjustment modal state (admin only)
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
@@ -96,10 +103,6 @@ export default function RunningTabPage() {
 
   const handleAddBulkExpenses = (entries: { name: string; amount: number }[]) => {
     addBulkExpenses(entries, activeOwnerId);
-  };
-
-  const handleTopUp = (amount: number, description: string) => {
-    addToBalance(amount, description, activeOwnerId);
   };
 
   const handleApprove = (id: string) => {

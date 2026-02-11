@@ -14,8 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { playSelectionChime, playLoginSuccess, playCancelSound } from "@/lib/audio";
-import { useOwnerStore, GUEST_ID } from "@/stores/ownerStore";
-import { verifyPassword } from "@/lib/crypto";
+import { useOwnerStore } from "@/stores/ownerStore";
 import type { Owner } from "@/types/owner";
 import { Logo } from "@/components/layout/Logo";
 
@@ -56,12 +55,8 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
   const owners = useOwnerStore((state) => state.owners);
   const login = useOwnerStore((state) => state.login);
   const addOwner = useOwnerStore((state) => state.addOwner);
-  const removeOwner = useOwnerStore((state) => state.removeOwner);
   const initializeDefaultOwner = useOwnerStore((state) => state.initializeDefaultOwner);
   const checkRateLimit = useOwnerStore((state) => state.checkRateLimit);
-
-  // Get master owner for password verification
-  const masterOwner = owners.find((o) => o.isMaster);
 
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [password, setPassword] = useState("");
@@ -77,15 +72,6 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
-
-  // Delete account state
-  const [deleteOwnerTarget, setDeleteOwnerTarget] = useState<Owner | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showMasterPasswordDialog, setShowMasterPasswordDialog] = useState(false);
-  const [masterPassword, setMasterPassword] = useState("");
-  const [showMasterPassword, setShowMasterPassword] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   // Context menu state
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; owner: Owner } | null>(null);
@@ -238,76 +224,6 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
       return () => window.removeEventListener("click", handleClick);
     }
   }, [contextMenu]);
-
-  // Start delete flow
-  const handleDeleteClick = useCallback(() => {
-    if (contextMenu) {
-      setDeleteOwnerTarget(contextMenu.owner);
-      setShowDeleteConfirm(true);
-      setContextMenu(null);
-    }
-  }, [contextMenu]);
-
-  // User confirmed "Yes" on first dialog - now ask for master password
-  const handleDeleteConfirmYes = useCallback(() => {
-    setShowDeleteConfirm(false);
-    setShowMasterPasswordDialog(true);
-    setMasterPassword("");
-    setDeleteError(null);
-  }, []);
-
-  // User clicked "No" on first dialog - cancel
-  const handleDeleteConfirmNo = useCallback(() => {
-    playCancelSound();
-    setShowDeleteConfirm(false);
-    setDeleteOwnerTarget(null);
-  }, []);
-
-  // Verify master password and delete account
-  const handleMasterPasswordSubmit = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!deleteOwnerTarget || !masterOwner) return;
-
-    if (!masterPassword.trim()) {
-      setDeleteError("Please enter the Master password");
-      return;
-    }
-
-    setIsDeleting(true);
-    setDeleteError(null);
-
-    try {
-      // Verify master password
-      const isValid = await verifyPassword(masterPassword, masterOwner.passwordHash);
-      if (!isValid) {
-        setDeleteError("Incorrect Master password");
-        setIsDeleting(false);
-        return;
-      }
-
-      // Delete the owner
-      removeOwner(deleteOwnerTarget.id);
-
-      // Close dialogs
-      setShowMasterPasswordDialog(false);
-      setDeleteOwnerTarget(null);
-      setMasterPassword("");
-    } catch {
-      setDeleteError("An error occurred. Please try again.");
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [deleteOwnerTarget, masterOwner, masterPassword, removeOwner]);
-
-  // Close master password dialog
-  const handleMasterPasswordClose = useCallback(() => {
-    playCancelSound();
-    setShowMasterPasswordDialog(false);
-    setDeleteOwnerTarget(null);
-    setMasterPassword("");
-    setDeleteError(null);
-    setShowMasterPassword(false);
-  }, []);
 
   // Get initials for avatar (with defensive checks)
   const getInitials = (name: string | undefined | null) => {
