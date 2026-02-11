@@ -107,6 +107,7 @@ export const useRunningTabStore = create<RunningTabState>()(
           createdAt: now,
         };
 
+        // Single set() call for tab + history
         set((state) => ({
           tab: newTab,
           history: [historyEntry, ...state.history],
@@ -129,18 +130,6 @@ export const useRunningTabStore = create<RunningTabState>()(
         const historyId = generateId();
         const difference = newBalance - currentTab.currentBalance;
 
-        // Update balance
-        set((state) => ({
-          tab: state.tab
-            ? {
-                ...state.tab,
-                currentBalance: newBalance,
-                updatedAt: now,
-              }
-            : null,
-        }));
-
-        // Add history entry
         const historyEntry: TabHistoryEntry = {
           id: historyId,
           type: "adjustment",
@@ -151,7 +140,11 @@ export const useRunningTabStore = create<RunningTabState>()(
           createdAt: now,
         };
 
+        // Single set() call for balance + history
         set((state) => ({
+          tab: state.tab
+            ? { ...state.tab, currentBalance: newBalance, updatedAt: now }
+            : null,
           history: [historyEntry, ...state.history],
         }));
 
@@ -172,18 +165,6 @@ export const useRunningTabStore = create<RunningTabState>()(
         const historyId = generateId();
         const newBalance = currentTab.currentBalance + amount;
 
-        // Update balance
-        set((state) => ({
-          tab: state.tab
-            ? {
-                ...state.tab,
-                currentBalance: newBalance,
-                updatedAt: now,
-              }
-            : null,
-        }));
-
-        // Add history entry with type "add"
         const historyEntry: TabHistoryEntry = {
           id: historyId,
           type: "add",
@@ -194,7 +175,11 @@ export const useRunningTabStore = create<RunningTabState>()(
           createdAt: now,
         };
 
+        // Single set() call for balance + history
         set((state) => ({
+          tab: state.tab
+            ? { ...state.tab, currentBalance: newBalance, updatedAt: now }
+            : null,
           history: [historyEntry, ...state.history],
         }));
 
@@ -278,7 +263,19 @@ export const useRunningTabStore = create<RunningTabState>()(
         const balanceChange = isTopUp ? expense.amount : -expense.amount;
         const newBalance = (currentTab?.currentBalance ?? 0) + balanceChange;
 
-        // Update expense status
+        const historyEntry: TabHistoryEntry = {
+          id: historyId,
+          type: isTopUp ? "add" : "expense_approved",
+          amount: balanceChange,
+          description: expense.name,
+          relatedExpenseId: id,
+          createdBy: approvedBy,
+          createdAt: now,
+        };
+
+        // Single set() call to update expense, balance, and history together.
+        // This triggers only ONE Zustand persist cycle instead of three,
+        // avoiding 3x localStorage serialization of the entire store.
         set((state) => ({
           expenses: state.expenses.map((e) =>
             e.id === id
@@ -291,36 +288,13 @@ export const useRunningTabStore = create<RunningTabState>()(
                 }
               : e
           ),
-        }));
-
-        // Update balance (add for top-up, subtract for expense)
-        set((state) => {
-          if (!state.tab) return state;
-          return {
-            tab: {
-              ...state.tab,
-              currentBalance: newBalance,
-              updatedAt: now,
-            },
-          };
-        });
-
-        // Add history entry
-        const historyEntry: TabHistoryEntry = {
-          id: historyId,
-          type: isTopUp ? "add" : "expense_approved",
-          amount: balanceChange,
-          description: expense.name,
-          relatedExpenseId: id,
-          createdBy: approvedBy,
-          createdAt: now,
-        };
-
-        set((state) => ({
+          tab: state.tab
+            ? { ...state.tab, currentBalance: newBalance, updatedAt: now }
+            : null,
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync all changes to Supabase for cross-device sync
+        // Sync individual changes to Supabase (not the full arrays)
         updateExpense(id, {
           status: "approved",
           approvedBy,
@@ -343,20 +317,127 @@ export const useRunningTabStore = create<RunningTabState>()(
 
       approveAllPendingExpenses: (approvedBy) => {
         const pendingExpenses = get().expenses.filter((e) => e.status === "pending");
+        if (pendingExpenses.length === 0) return;
 
-        // Approve each pending expense
+        const now = new Date().toISOString();
+        const currentTab = get().tab;
+        let runningBalance = currentTab?.currentBalance ?? 0;
+
+        // Build all updates in a single pass
+        const approvedIds = new Set(pendingExpenses.map((e) => e.id));
+        const newHistoryEntries: TabHistoryEntry[] = [];
+
         for (const expense of pendingExpenses) {
-          get().approveExpense(expense.id, approvedBy);
+          const isTopUp = expense.name === "Kia Top Up";
+          const balanceChange = isTopUp ? expense.amount : -expense.amount;
+          runningBalance += balanceChange;
+
+          newHistoryEntries.push({
+            id: generateId(),
+            type: isTopUp ? "add" : "expense_approved",
+            amount: balanceChange,
+            description: expense.name,
+            relatedExpenseId: expense.id,
+            createdBy: approvedBy,
+            createdAt: now,
+          });
         }
+
+        // Single set() call for all approvals — one persist cycle, one re-render
+        set((state) => ({
+          expenses: state.expenses.map((e) =>
+            approvedIds.has(e.id)
+              ? {
+                  ...e,
+                  status: "approved" as const,
+                  approvedBy,
+                  approvedAt: now,
+                  updatedAt: now,
+                }
+              : e
+          ),
+          tab: state.tab
+            ? { ...state.tab, currentBalance: runningBalance, updatedAt: now }
+            : null,
+          history: [...newHistoryEntries, ...state.history],
+        }));
+
+        // Sync to Supabase: batch where possible
+        for (const expense of pendingExpenses) {
+          updateExpense(expense.id, {
+            status: "approved",
+            approvedBy,
+            approvedAt: now,
+            updatedAt: now,
+          }).catch((error) => {
+            console.error("[Store] Failed to sync expense approval to Supabase:", error);
+          });
+        }
+
+        if (currentTab) {
+          updateTabBalance(currentTab.id, runningBalance).catch((error) => {
+            console.error("[Store] Failed to sync tab balance to Supabase:", error);
+          });
+        }
+
+        upsertHistory(newHistoryEntries).catch((error) => {
+          console.error("[Store] Failed to sync history entries to Supabase:", error);
+        });
       },
 
       rejectAllPendingExpenses: (reason, rejectedBy) => {
         const pendingExpenses = get().expenses.filter((e) => e.status === "pending");
+        if (pendingExpenses.length === 0) return;
 
-        // Reject each pending expense with the same reason
+        const now = new Date().toISOString();
+        const rejectedIds = new Set(pendingExpenses.map((e) => e.id));
+        const newHistoryEntries: TabHistoryEntry[] = [];
+
         for (const expense of pendingExpenses) {
-          get().rejectExpense(expense.id, reason, rejectedBy);
+          newHistoryEntries.push({
+            id: generateId(),
+            type: "expense_rejected",
+            amount: 0,
+            description: `Rejected: ${expense.name} - ${reason}`,
+            relatedExpenseId: expense.id,
+            createdBy: rejectedBy,
+            createdAt: now,
+          });
         }
+
+        // Single set() call for all rejections
+        set((state) => ({
+          expenses: state.expenses.map((e) =>
+            rejectedIds.has(e.id)
+              ? {
+                  ...e,
+                  status: "rejected" as const,
+                  approvedBy: rejectedBy,
+                  approvedAt: now,
+                  rejectionReason: reason,
+                  updatedAt: now,
+                }
+              : e
+          ),
+          history: [...newHistoryEntries, ...state.history],
+        }));
+
+        // Sync to Supabase
+        for (const expense of pendingExpenses) {
+          updateExpense(expense.id, {
+            status: "rejected",
+            approvedBy: rejectedBy,
+            approvedAt: now,
+            rejectionReason: reason,
+            updatedAt: now,
+          }).catch((error) => {
+            console.error("[Store] Failed to sync expense rejection to Supabase:", error);
+          });
+        }
+
+        upsertHistory(newHistoryEntries).catch((error) => {
+          console.error("[Store] Failed to sync history entries to Supabase:", error);
+        });
       },
 
       rejectExpense: (id, reason, approvedBy) => {
@@ -366,7 +447,17 @@ export const useRunningTabStore = create<RunningTabState>()(
         const now = new Date().toISOString();
         const historyId = generateId();
 
-        // Update expense status with rejection reason
+        const historyEntry: TabHistoryEntry = {
+          id: historyId,
+          type: "expense_rejected",
+          amount: 0,
+          description: `Rejected: ${expense.name} - ${reason}`,
+          relatedExpenseId: id,
+          createdBy: approvedBy,
+          createdAt: now,
+        };
+
+        // Single set() call for expense update + history entry
         set((state) => ({
           expenses: state.expenses.map((e) =>
             e.id === id
@@ -380,20 +471,6 @@ export const useRunningTabStore = create<RunningTabState>()(
                 }
               : e
           ),
-        }));
-
-        // Add history entry with reason
-        const historyEntry: TabHistoryEntry = {
-          id: historyId,
-          type: "expense_rejected",
-          amount: 0,
-          description: `Rejected: ${expense.name} - ${reason}`,
-          relatedExpenseId: id,
-          createdBy: approvedBy,
-          createdAt: now,
-        };
-
-        set((state) => ({
           history: [historyEntry, ...state.history],
         }));
 
@@ -534,6 +611,15 @@ export const useRunningTabStore = create<RunningTabState>()(
     }),
     {
       name: RUNNING_TAB_STORAGE_KEY,
+      // Exclude history from localStorage persistence to prevent unbounded
+      // storage growth. History is fetched from Supabase on every app load
+      // via performInitialLoad(), so persisting it locally is redundant and
+      // becomes the largest contributor to localStorage bloat over time.
+      partialize: (state) => ({
+        tab: state.tab,
+        expenses: state.expenses,
+        // history is intentionally excluded — loaded from cloud on startup
+      }),
     }
   )
 );

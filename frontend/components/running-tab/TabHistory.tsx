@@ -31,16 +31,23 @@ const historyTypeConfig: Record<
   adjustment: { label: "Balance Adjustment", colorClass: "text-amber-500" },
 };
 
+/** Number of history entries to show per page in the UI */
+const HISTORY_DISPLAY_PAGE_SIZE = 50;
+
 export function TabHistory({ history, owners }: TabHistoryProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [displayCount, setDisplayCount] = useState(HISTORY_DISPLAY_PAGE_SIZE);
 
   const enrichedHistory = useMemo(() => {
     const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
-    return history.map((entry) => ({
+    // Only enrich the entries we're going to display, not the entire array
+    return history.slice(0, displayCount).map((entry) => ({
       ...entry,
       creatorName: entry.createdBy ? ownerMap.get(entry.createdBy) : undefined,
     }));
-  }, [history, owners]);
+  }, [history, owners, displayCount]);
+
+  const hasMore = history.length > displayCount;
 
   if (history.length === 0) {
     return null;
@@ -57,7 +64,11 @@ export function TabHistory({ history, owners }: TabHistoryProps) {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => {
+              setIsExpanded(!isExpanded);
+              // Reset display count when collapsing to free DOM nodes
+              if (isExpanded) setDisplayCount(HISTORY_DISPLAY_PAGE_SIZE);
+            }}
             className="h-8"
           >
             {isExpanded ? (
@@ -84,6 +95,18 @@ export function TabHistory({ history, owners }: TabHistoryProps) {
             {enrichedHistory.map((entry) => (
               <HistoryItem key={entry.id} entry={entry} />
             ))}
+            {hasMore && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setDisplayCount((c) => c + HISTORY_DISPLAY_PAGE_SIZE)}
+                  className="text-muted-foreground"
+                >
+                  Load more ({history.length - displayCount} remaining)
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       )}

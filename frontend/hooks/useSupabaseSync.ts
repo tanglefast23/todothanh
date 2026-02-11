@@ -190,11 +190,14 @@ export function useSupabaseSync(): void {
   //   syncExpenses.current(expenses);
   // }, [expenses]);
 
-  // Sync tab history when it changes
-  useEffect(() => {
-    if (!initialLoadComplete.current) return;
-    syncTabHistory.current(history);
-  }, [history]);
+  // Tab history sync disabled - individual actions (approve, reject, adjust, add)
+  // now sync their history entries directly to Supabase via upsertHistory([entry]).
+  // Bulk syncing the entire history array was causing O(n) upserts on every change,
+  // sending thousands of rows when only 1 new entry was added.
+  // useEffect(() => {
+  //   if (!initialLoadComplete.current) return;
+  //   syncTabHistory.current(history);
+  // }, [history]);
 
   // Sync scheduled events when they change
   // Note: Individual actions (add, complete, delete) also sync directly to Supabase.
