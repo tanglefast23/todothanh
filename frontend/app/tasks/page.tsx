@@ -53,8 +53,11 @@ export default function TasksPage() {
 
   // Handle deleting a task
   const handleDelete = useCallback((id: string) => {
+    if (!isMaster) return;
+    const task = tasks.find((t) => t.id === id);
+    if (!task || task.status !== "completed") return;
     deleteTask(id);
-  }, [deleteTask]);
+  }, [deleteTask, isMaster, tasks]);
 
   // Handle adding attachment to a task
   const handleAttachment = useCallback((taskId: string, url: string) => {

@@ -53,7 +53,7 @@ export function TaskItem({
   const [pressTimer, setPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   const handlePressStart = () => {
-    if (!isCompleted) return;
+    if (!isCompleted || !canDelete) return;
     const timer = setTimeout(() => {
       setShowDeleteConfirm(true);
     }, 500); // 500ms long press
@@ -68,7 +68,7 @@ export function TaskItem({
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
-    if (!isCompleted) return;
+    if (!isCompleted || !canDelete) return;
     e.preventDefault();
     setShowDeleteConfirm(true);
   };
@@ -208,7 +208,7 @@ export function TaskItem({
         </div>
       </div>
 
-      {showDeleteConfirm && (
+      {showDeleteConfirm && canDelete && (
         <div className="flex gap-2">
           <button
             onClick={() => onDelete(task.id)}
