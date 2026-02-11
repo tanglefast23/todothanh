@@ -28,7 +28,6 @@ import { useScheduledEventsStore } from "@/stores/scheduledEventsStore";
 
 import { retryWithBackoff } from "./utils";
 
-import type { Task } from "@/types/tasks";
 import type { ScheduledEvent } from "@/types/scheduled-events";
 import type { Tag } from "@/types/dashboard";
 import type { Owner } from "@/types/owner";
@@ -138,15 +137,20 @@ export async function performInitialLoad(): Promise<void> {
   const localScheduledEvents = useScheduledEventsStore.getState().events;
 
   // Sync Tasks
-  await syncDataType<Task[]>({
-    name: "tasks",
-    cloudData: cloudTasks,
-    localData: localTasks,
-    hasCloudData: (data) => Array.isArray(data) && data.length > 0,
-    hasLocalData: (data) => Array.isArray(data) && data.length > 0,
-    updateLocal: (data) => useTasksStore.getState().setTasks(data),
-    pushToCloud: (data) => upsertTasks(data),
-  });
+  // Tasks now sync each CRUD action directly to Supabase, so cloud is the source
+  // of truth even when the cloud list is empty. This prevents stale local tasks
+  // from being re-pushed after a legitimate delete of the last task.
+  if (Array.isArray(cloudTasks)) {
+    useTasksStore.getState().setTasks(cloudTasks);
+  } else if (Array.isArray(localTasks) && localTasks.length > 0) {
+    // Fallback only if cloud fetch returned undefined (unexpected).
+    console.log("[Sync] Recovery: pushing local tasks to cloud");
+    try {
+      await upsertTasks(localTasks);
+    } catch (error) {
+      console.error("[Sync] Failed to push local tasks to cloud:", error);
+    }
+  }
 
   // Sync Tags
   await syncDataType<Tag[]>({

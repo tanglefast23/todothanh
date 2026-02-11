@@ -138,6 +138,9 @@ export const useTasksStore = create<TasksState>()(
       },
 
       deleteTask: (id) => {
+        const taskToDelete = get().tasks.find((task) => task.id === id);
+        if (!taskToDelete) return;
+
         set((state) => ({
           tasks: state.tasks.filter((task) => task.id !== id),
         }));
@@ -145,6 +148,15 @@ export const useTasksStore = create<TasksState>()(
         // Sync to Supabase for cross-device sync
         deleteTaskFromSupabase(id).catch((error) => {
           console.error("[Store] Failed to sync task deletion to Supabase:", error);
+          // Restore locally if cloud delete fails to avoid cross-device drift.
+          set((state) => {
+            if (state.tasks.some((task) => task.id === id)) {
+              return state;
+            }
+            return {
+              tasks: [taskToDelete, ...state.tasks],
+            };
+          });
         });
       },
 
