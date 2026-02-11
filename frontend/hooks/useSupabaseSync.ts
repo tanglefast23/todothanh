@@ -25,7 +25,6 @@ import {
   createSyncOwnersToSupabase,
   createSyncPermissionsToSupabase,
   createSyncRunningTabToSupabase,
-  createSyncTabHistoryToSupabase,
   createSyncScheduledEventsToSupabase,
   flushAllPendingSyncs,
   type SyncStateRefs,
@@ -53,7 +52,6 @@ export function useSupabaseSync(): void {
   const syncOwners = useRef(createSyncOwnersToSupabase(refs));
   const syncPermissions = useRef(createSyncPermissionsToSupabase(refs));
   const syncRunningTab = useRef(createSyncRunningTabToSupabase(refs));
-  const syncTabHistory = useRef(createSyncTabHistoryToSupabase(refs));
   const syncScheduledEvents = useRef(createSyncScheduledEventsToSupabase(refs));
 
   // Subscribe to store changes
@@ -61,7 +59,6 @@ export function useSupabaseSync(): void {
   const owners = useOwnerStore((state) => state.owners);
   const permissions = usePermissionsStore((state) => state.permissions);
   const tab = useRunningTabStore((state) => state.tab);
-  const history = useRunningTabStore((state) => state.history);
   const scheduledEvents = useScheduledEventsStore((state) => state.events);
 
   // Perform initial load on mount
