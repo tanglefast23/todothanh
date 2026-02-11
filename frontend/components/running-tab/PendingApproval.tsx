@@ -15,11 +15,13 @@ import {
   Check,
   X,
   Receipt,
+  ImagePlus,
+  CircleCheck,
+  CircleX,
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { ExpenseWithOwner } from "@/types/runningTab";
 import { cn } from "@/lib/utils";
-import { formatVND } from "./BalanceDisplay";
 import { formatRelativeTime } from "@/lib/formatters";
 import { AttachmentUpload } from "./AttachmentUpload";
 
@@ -35,41 +37,41 @@ function getExpenseLucideIcon(name: string): ExpenseLucideIcon {
   const n = name.toLowerCase();
 
   if (n.includes("groceries") || n.includes("grocery")) {
-    return { Icon: ShoppingCart, color: "text-emerald-400", bg: "bg-emerald-500/10" };
+    return { Icon: ShoppingCart, color: "text-emerald-600", bg: "bg-emerald-500/15" };
   }
   if (n.includes("gas") || n.includes("fuel") || n.includes("petrol")) {
-    return { Icon: Fuel, color: "text-orange-400", bg: "bg-orange-500/10" };
+    return { Icon: Fuel, color: "text-orange-600", bg: "bg-orange-500/15" };
   }
   if (n.includes("coffee") || n.includes("café") || n.includes("cafe")) {
-    return { Icon: Coffee, color: "text-cyan-400", bg: "bg-cyan-500/10" };
+    return { Icon: Coffee, color: "text-cyan-600", bg: "bg-cyan-500/15" };
   }
   if (n.includes("bubble tea") || n.includes("boba")) {
-    return { Icon: CupSoda, color: "text-purple-400", bg: "bg-purple-500/10" };
+    return { Icon: CupSoda, color: "text-purple-600", bg: "bg-purple-500/15" };
   }
   if (n.includes("food") || n.includes("lunch") || n.includes("dinner") || n.includes("breakfast")) {
-    return { Icon: UtensilsCrossed, color: "text-amber-400", bg: "bg-amber-500/10" };
+    return { Icon: UtensilsCrossed, color: "text-amber-600", bg: "bg-amber-500/15" };
   }
   if (n.includes("parking") || n.includes("park")) {
-    return { Icon: CircleParking, color: "text-blue-400", bg: "bg-blue-500/10" };
+    return { Icon: CircleParking, color: "text-blue-600", bg: "bg-blue-500/15" };
   }
   if (n.includes("kia") || n.includes("car")) {
-    return { Icon: Car, color: "text-slate-300", bg: "bg-slate-500/10" };
+    return { Icon: Car, color: "text-slate-600", bg: "bg-slate-500/15" };
   }
   if (n.includes("vet")) {
-    return { Icon: Stethoscope, color: "text-pink-400", bg: "bg-pink-500/10" };
+    return { Icon: Stethoscope, color: "text-pink-600", bg: "bg-pink-500/15" };
   }
   if (n.includes("grooming") || n.includes("groom")) {
-    return { Icon: Scissors, color: "text-violet-400", bg: "bg-violet-500/10" };
+    return { Icon: Scissors, color: "text-violet-600", bg: "bg-violet-500/15" };
   }
   if (n.includes("many drinks")) {
-    return { Icon: Martini, color: "text-rose-400", bg: "bg-rose-500/10" };
+    return { Icon: Martini, color: "text-rose-600", bg: "bg-rose-500/15" };
   }
   if (n.includes("drinks") || n.includes("cocktail") || n.includes("alcohol")) {
-    return { Icon: Wine, color: "text-rose-400", bg: "bg-rose-500/10" };
+    return { Icon: Wine, color: "text-rose-600", bg: "bg-rose-500/15" };
   }
 
   // Default fallback
-  return { Icon: Receipt, color: "text-zinc-400", bg: "bg-zinc-500/10" };
+  return { Icon: Receipt, color: "text-zinc-600", bg: "bg-zinc-500/15" };
 }
 
 // --- Types ---
@@ -80,6 +82,7 @@ interface PendingApprovalProps {
   onApprove: (id: string) => void;
   onApproveAll?: () => void;
   onReject: (id: string) => void;
+  onRejectAll?: () => void;
   onAttachment: (id: string, url: string) => void;
 }
 
@@ -91,32 +94,28 @@ export function PendingApproval({
   onApprove,
   onApproveAll,
   onReject,
+  onRejectAll,
   onAttachment,
 }: PendingApprovalProps) {
   if (expenses.length === 0) return null;
 
   return (
-    <section className="flex flex-col gap-3.5 rounded-2xl bg-[#0c0c0f] p-5 pt-6">
-      {/* Header */}
+    <section className="flex flex-col gap-3.5">
+      {/* Header with amber badge */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-white text-balance">Pending Approval</h3>
-          <span className="flex items-center justify-center rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-orange-500">
-            {expenses.length}
+          <h3 className="text-lg font-bold tracking-tight text-foreground">Pending Approval</h3>
+          <span className="flex items-center gap-1 rounded-xl bg-[#FFFBEB] px-3 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+            <span className="text-xs font-semibold text-amber-600">
+              {expenses.length} {expenses.length === 1 ? "item" : "items"}
+            </span>
           </span>
         </div>
-        {canApprove && onApproveAll && expenses.length > 1 && (
-          <button
-            onClick={onApproveAll}
-            className="text-xs font-medium text-orange-500 active:scale-95 transition-transform"
-          >
-            Approve all
-          </button>
-        )}
       </div>
 
       {/* Expense Cards */}
-      <div className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-3.5">
         {expenses.map((expense) => (
           <PendingExpenseCard
             key={expense.id}
@@ -128,6 +127,30 @@ export function PendingApproval({
           />
         ))}
       </div>
+
+      {/* Approve All / Reject All buttons */}
+      {canApprove && expenses.length > 1 && (
+        <div className="flex gap-2.5">
+          {onApproveAll && (
+            <button
+              onClick={onApproveAll}
+              className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-emerald-500 h-11 text-sm font-semibold text-white transition-transform active:scale-[0.97]"
+            >
+              <CircleCheck className="size-[18px]" />
+              Approve All
+            </button>
+          )}
+          {onRejectAll && (
+            <button
+              onClick={onRejectAll}
+              className="flex flex-1 items-center justify-center gap-2 rounded-[14px] bg-white border-[1.5px] border-red-300 h-11 text-sm font-semibold text-red-500 transition-transform active:scale-[0.97]"
+            >
+              <CircleX className="size-[18px]" />
+              Reject All
+            </button>
+          )}
+        </div>
+      )}
     </section>
   );
 }
@@ -152,66 +175,61 @@ function PendingExpenseCard({
   const { Icon, color, bg } = getExpenseLucideIcon(expense.name);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#1f1f23] bg-[#141417]">
-      {/* Content Row */}
-      <div className="flex items-center gap-3.5 p-4">
+    <div className="flex flex-col gap-3 rounded-[18px] bg-[#F6F7F8] p-4">
+      {/* Top row: Icon + Name/Meta + Amount */}
+      <div className="flex items-center gap-3.5">
         {/* Icon */}
-        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", bg)}>
-          <Icon className={cn("size-5", color)} />
+        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-[14px]", bg)}>
+          <Icon className={cn("size-[22px]", color)} />
         </div>
 
-        {/* Info */}
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          {/* Name + Amount */}
-          <div className="flex items-center justify-between gap-2">
-            <span className="truncate text-sm font-semibold text-white">
-              {expense.name}
-            </span>
-            <span className="shrink-0 font-mono text-sm font-medium tabular-nums text-white">
-              {formatVND(expense.amount)}
-            </span>
-          </div>
-
-          {/* Meta: person + time */}
-          <div className="flex items-center gap-1.5">
-            {expense.creatorName && (
-              <span className="text-[11px] font-medium text-zinc-500">
-                {expense.creatorName}
-              </span>
-            )}
-            {expense.creatorName && (
-              <span className="size-[3px] rounded-full bg-zinc-600" />
-            )}
-            <span className="text-[11px] text-zinc-600">
-              {formatRelativeTime(expense.createdAt)}
-            </span>
-          </div>
+        {/* Name + Meta */}
+        <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+          <span className="truncate text-[15px] font-semibold text-[#1A1A1A]">
+            {expense.name}
+          </span>
+          <span className="text-xs text-[#9CA3AF]">
+            {expense.creatorName ? `${expense.creatorName} · ` : ""}
+            {formatRelativeTime(expense.createdAt)}
+          </span>
         </div>
+
+        {/* Amount */}
+        <span className="shrink-0 text-[22px] font-extrabold tabular-nums text-[#1A1A1A]">
+          {new Intl.NumberFormat("vi-VN").format(expense.amount)}
+        </span>
       </div>
 
-      {/* Attachment upload (if no attachment yet) */}
-      {!expense.attachmentUrl && (
-        <div className="px-4 pb-1">
-          <AttachmentUpload
-            expenseId={expense.id}
-            onUpload={(url) => onAttachment(expense.id, url)}
-          />
-        </div>
-      )}
-
-      {/* Action Buttons */}
+      {/* Action row: Attach + Reject + Approve */}
       {canApprove && (
-        <div className="flex gap-2 px-4 pb-3 pt-1">
+        <div className="flex items-center gap-2.5">
+          {/* Attachment button */}
+          {!expense.attachmentUrl ? (
+            <div className="shrink-0">
+              <AttachmentUpload
+                expenseId={expense.id}
+                onUpload={(url) => onAttachment(expense.id, url)}
+              />
+            </div>
+          ) : (
+            <div className="flex size-[38px] shrink-0 items-center justify-center rounded-xl bg-[#FDF2F8]">
+              <ImagePlus className="size-[18px] text-pink-500" />
+            </div>
+          )}
+
+          {/* Reject */}
           <button
             onClick={() => onReject(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-red-500/20 bg-red-500/8 py-2 text-xs font-medium text-red-500 transition-transform active:scale-[0.97]"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-500 transition-transform active:scale-[0.97]"
           >
             <X className="size-3.5" />
             Reject
           </button>
+
+          {/* Approve */}
           <button
             onClick={() => onApprove(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-emerald-500/20 bg-emerald-500/10 py-2 text-xs font-medium text-emerald-500 transition-transform active:scale-[0.97]"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#F0FDF4] h-[38px] text-[13px] font-semibold text-emerald-500 transition-transform active:scale-[0.97]"
           >
             <Check className="size-3.5" />
             Approve

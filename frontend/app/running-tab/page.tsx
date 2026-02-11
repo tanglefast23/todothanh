@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Check, X } from "lucide-react";
 import { Header } from "@/components/layout/Header";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useOwnerStore } from "@/stores/ownerStore";
@@ -10,6 +10,7 @@ import { usePermissionsStore } from "@/stores/permissionsStore";
 import { BalanceDisplay, formatVND } from "@/components/running-tab/BalanceDisplay";
 import { InitializeBalanceForm } from "@/components/running-tab/InitializeBalanceForm";
 import { AddExpenseModal } from "@/components/running-tab/AddExpenseModal";
+import type { AddExpenseModalHandle } from "@/components/running-tab/AddExpenseModal";
 import { ExpenseShortcuts } from "@/components/running-tab/ExpenseShortcuts";
 import { ExpenseList } from "@/components/running-tab/ExpenseList";
 import { TabHistory } from "@/components/running-tab/TabHistory";
@@ -24,12 +25,45 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { formatRelativeTime } from "@/lib/formatters";
+import type { TabHistoryEntry, TabHistoryType } from "@/types/runningTab";
+
+// History type config for Recent Activity icons
+const historyIconConfig: Record<TabHistoryType, { bg: string; color: string; icon: "check" | "plus" | "x" | "minus" | "settings" }> = {
+  initial: { bg: "bg-blue-50", color: "text-blue-500", icon: "plus" },
+  add: { bg: "bg-indigo-50", color: "text-indigo-500", icon: "plus" },
+  expense_approved: { bg: "bg-green-50", color: "text-green-500", icon: "check" },
+  expense_rejected: { bg: "bg-rose-50", color: "text-red-500", icon: "x" },
+  adjustment: { bg: "bg-amber-50", color: "text-amber-500", icon: "settings" },
+};
+
+function HistoryIcon({ type }: { type: TabHistoryType }) {
+  const config = historyIconConfig[type];
+  const iconMap = {
+    check: <Check className="size-4" />,
+    plus: <Plus className="size-4" />,
+    x: <X className="size-4" />,
+    minus: <Trash2 className="size-4" />,
+    settings: <Plus className="size-4" />,
+  };
+  return (
+    <div className={`flex size-9 shrink-0 items-center justify-center rounded-[18px] ${config.bg} ${config.color}`}>
+      {iconMap[config.icon]}
+    </div>
+  );
+}
+
+const historyTypeLabel: Record<TabHistoryType, string> = {
+  initial: "Initial Balance",
+  add: "Balance top-up",
+  expense_approved: "Expense approved",
+  expense_rejected: "Expense rejected",
+  adjustment: "Balance adjusted",
+};
 
 export default function RunningTabPage() {
-  // Redirect to login if not authenticated
   const { isLoading: isAuthLoading, isAuthenticated } = useAuthGuard();
 
-  // Hydration-safe state
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -56,45 +90,72 @@ export default function RunningTabPage() {
   const clearCompletedExpenses = useRunningTabStore((state) => state.clearCompletedExpenses);
   const autoCleanExpiredExpenses = useRunningTabStore((state) => state.autoCleanExpiredExpenses);
 
-  // Auto-clean expired approved/rejected expenses (older than 1 month)
   useEffect(() => {
     if (isMounted) {
       autoCleanExpiredExpenses();
     }
   }, [isMounted, autoCleanExpiredExpenses]);
 
-  // Balance adjustment modal state (admin only)
+  // Modal state
   const [adjustModalOpen, setAdjustModalOpen] = useState(false);
   const [adjustAmount, setAdjustAmount] = useState("");
   const [adjustReason, setAdjustReason] = useState("");
   const adjustAmountRef = useRef<HTMLInputElement>(null);
-
-  // Clear all modal state (admin only)
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
-
-  // Top-up confirmation dialog state
   const [topUpConfirmOpen, setTopUpConfirmOpen] = useState(false);
 
-  // Prefilled expense name from shortcuts
+  // Prefilled expense state
   const [prefilledExpenseName, setPrefilledExpenseName] = useState("");
   const [prefilledExpenseTab, setPrefilledExpenseTab] = useState<"simple" | "bulk">("simple");
 
-  // Proxy input ref for capturing mobile keyboard focus on shortcut tap
+  // Refs
   const proxyFocusRef = useRef<HTMLInputElement>(null);
+  const addExpenseRef = useRef<AddExpenseModalHandle>(null);
 
   // Permissions
   const canApproveExpenses = usePermissionsStore((state) => state.canApproveExpenses);
 
-  // Derived state (hydration-safe)
+  // Derived state
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
   const isMaster = isMounted ? isMasterLoggedIn() : false;
   const isTabInitialized = isMounted && tab !== null;
   const userCanApprove = isMounted && activeOwnerId ? canApproveExpenses(activeOwnerId) : false;
 
-  // Owner list for display (simplified)
   const ownerList = useMemo(() => {
     return owners.map((o) => ({ id: o.id, name: o.name }));
   }, [owners]);
+
+  // Recent activity: 3 most recent history entries
+  const recentActivity = useMemo(() => {
+    return history.slice(0, 3);
+  }, [history]);
+
+  // Monthly summary: aggregate current month stats
+  const monthlySummary = useMemo(() => {
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    let totalAdded = 0;
+    let totalSpent = 0;
+    let expenseCount = 0;
+
+    for (const entry of history) {
+      const entryDate = new Date(entry.createdAt);
+      if (entryDate.getMonth() === currentMonth && entryDate.getFullYear() === currentYear) {
+        if (entry.type === "add" || entry.type === "initial" || entry.type === "adjustment") {
+          if (entry.amount > 0) totalAdded += entry.amount;
+        }
+        if (entry.type === "expense_approved") {
+          totalSpent += Math.abs(entry.amount);
+          expenseCount++;
+        }
+      }
+    }
+
+    const monthLabel = now.toLocaleDateString("en-US", { month: "short", year: "numeric" });
+    return { totalAdded, totalSpent, expenseCount, monthLabel };
+  }, [history]);
 
   // Handlers
   const handleInitialize = (amount: number) => {
@@ -130,9 +191,6 @@ export default function RunningTabPage() {
   };
 
   const handleShortcutSelectExpense = (name: string, tab: "simple" | "bulk" = "simple") => {
-    // Synchronously focus the proxy input to capture the user gesture on iOS.
-    // This opens the numeric keyboard immediately; focus transfers to the real
-    // amount input once the dialog mounts, keeping the keyboard open.
     proxyFocusRef.current?.focus({ preventScroll: true });
     setPrefilledExpenseTab(tab);
     setPrefilledExpenseName(name);
@@ -169,7 +227,6 @@ export default function RunningTabPage() {
     }
   };
 
-  // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading">
@@ -179,7 +236,6 @@ export default function RunningTabPage() {
     );
   }
 
-  // Show loading state while hydrating
   if (!isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading">
@@ -191,7 +247,7 @@ export default function RunningTabPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hidden proxy input: focused synchronously on shortcut tap to open iOS numeric keyboard */}
+      {/* Hidden proxy input for iOS keyboard */}
       <input
         ref={proxyFocusRef}
         type="tel"
@@ -202,8 +258,8 @@ export default function RunningTabPage() {
       />
       <Header />
 
-      <main className="flex-1 px-4 py-6 sm:px-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+      <main className="flex-1 px-4 py-5 sm:px-6">
+        <div className="max-w-3xl mx-auto flex flex-col gap-7">
           {/* Show Initialize Form if not initialized (master only) */}
           {!isTabInitialized && isMaster && (
             <InitializeBalanceForm onInitialize={handleInitialize} />
@@ -225,59 +281,63 @@ export default function RunningTabPage() {
             </Card>
           )}
 
-          {/* Main Content - only show if initialized */}
+          {/* Main Content */}
           {isTabInitialized && (
             <>
-              {/* Balance Display - Premium Card */}
+              {/* Balance Display with action buttons inside */}
               <BalanceDisplay
                 amount={tab.currentBalance}
                 canEdit={isMaster}
                 onEdit={openAdjustModal}
+              >
+                {/* Top-Up Button */}
+                <button
+                  onClick={() => setTopUpConfirmOpen(true)}
+                  aria-label="Top up 5 million VND"
+                  className="flex items-center justify-center gap-2 px-[18px] h-10 rounded-[20px] bg-[#B6F2CF] text-[#15803D] text-[13px] font-bold transition-transform active:scale-95"
+                >
+                  <span className="text-2xl font-black leading-none">+</span>
+                  5M Top Up
+                </button>
+
+                {/* Single expense button */}
+                <button
+                  type="button"
+                  onClick={() => addExpenseRef.current?.openWithTab("simple")}
+                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
+                >
+                  <span className="text-2xl font-black leading-none">+</span>
+                  Single
+                </button>
+
+                {/* Bulk expense button */}
+                <button
+                  type="button"
+                  onClick={() => addExpenseRef.current?.openWithTab("bulk")}
+                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
+                >
+                  <span className="text-2xl font-black leading-none">+</span>
+                  Bulk
+                </button>
+              </BalanceDisplay>
+
+              {/* AddExpenseModal (hidden trigger, opened via ref) */}
+              <AddExpenseModal
+                ref={addExpenseRef}
+                onAddExpense={handleAddExpense}
+                onAddBulkExpenses={handleAddBulkExpenses}
+                prefilledName={prefilledExpenseName}
+                prefilledTab={prefilledExpenseTab}
+                onClearPrefilled={() => {
+                  setPrefilledExpenseName("");
+                  setPrefilledExpenseTab("simple");
+                }}
               />
 
-              {/* Expense Actions Section */}
-              <section className="space-y-5" aria-label="Expense actions">
-                {/* Quick Expense Shortcuts */}
-                <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} />
+              {/* Quick Add Shortcuts */}
+              <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} />
 
-                {/* Action Buttons Row — Pencil MCP design */}
-                <div className="flex justify-center items-center gap-2.5">
-                  <AddExpenseModal
-                    onAddExpense={handleAddExpense}
-                    onAddBulkExpenses={handleAddBulkExpenses}
-                    prefilledName={prefilledExpenseName}
-                    prefilledTab={prefilledExpenseTab}
-                    onClearPrefilled={() => {
-                      setPrefilledExpenseName("");
-                      setPrefilledExpenseTab("simple");
-                    }}
-                  />
-
-                  {/* Top-Up Button */}
-                  <button
-                    onClick={() => setTopUpConfirmOpen(true)}
-                    aria-label="Top up 5 million VND"
-                    className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-emerald-500 to-emerald-600 transition-transform active:scale-95"
-                  >
-                    <Plus className="size-5" />
-                    <span className="font-mono font-bold">5M</span>
-                  </button>
-                </div>
-              </section>
-
-              {/* Section Divider */}
-              <div className="relative py-2">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
-                </div>
-                <div className="relative flex justify-center">
-                  <span className="px-4 text-[10px] uppercase tracking-widest text-muted-foreground/50 bg-background font-medium">
-                    Expenses
-                  </span>
-                </div>
-              </div>
-
-              {/* Expense List - each section has its own card */}
+              {/* Expense List (Pending + Approved + Rejected) */}
               <ExpenseList
                 expenses={expenses}
                 owners={ownerList}
@@ -289,28 +349,40 @@ export default function RunningTabPage() {
                 onAttachment={handleAttachment}
               />
 
+              {/* Recent Activity */}
+              {recentActivity.length > 0 && (
+                <RecentActivitySection entries={recentActivity} />
+              )}
+
+              {/* Monthly Summary */}
+              {history.length > 0 && (
+                <MonthlySummarySection
+                  totalAdded={monthlySummary.totalAdded}
+                  totalSpent={monthlySummary.totalSpent}
+                  expenseCount={monthlySummary.expenseCount}
+                  monthLabel={monthlySummary.monthLabel}
+                />
+              )}
+
               {/* Tab History */}
               <TabHistory history={history} owners={ownerList} />
 
-              {/* Clear All Button - Admin only, at the very bottom */}
+              {/* Clear Button */}
               {isMaster && (expenses.filter(e => e.status !== "pending").length > 0) && (
-                <div className="flex justify-center pt-8 pb-6">
-                  <Button
-                    variant="outline"
-                    className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/30 hover:border-red-500/50 shadow-sm transition-all duration-200 active:scale-95"
-                    onClick={() => setClearAllModalOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Clear Approved & Rejected
-                  </Button>
-                </div>
+                <button
+                  onClick={() => setClearAllModalOpen(true)}
+                  className="flex items-center justify-center gap-2 w-full h-12 rounded-[14px] bg-white border-[1.5px] border-red-300 text-sm font-semibold text-red-500 transition-transform active:scale-[0.98]"
+                >
+                  <Trash2 className="size-[18px]" />
+                  Clear Approved &amp; Rejected
+                </button>
               )}
             </>
           )}
         </div>
       </main>
 
-      {/* Clear All Confirmation Modal (Admin Only) */}
+      {/* Clear All Confirmation Modal */}
       <Dialog open={clearAllModalOpen} onOpenChange={setClearAllModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -320,11 +392,7 @@ export default function RunningTabPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setClearAllModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setClearAllModalOpen(false)}>
               Cancel
             </Button>
             <Button
@@ -341,7 +409,7 @@ export default function RunningTabPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Balance Adjustment Modal (Admin Only) */}
+      {/* Balance Adjustment Modal */}
       <Dialog open={adjustModalOpen} onOpenChange={setAdjustModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -376,11 +444,7 @@ export default function RunningTabPage() {
               />
             </div>
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setAdjustModalOpen(false)}
-              >
+              <Button type="button" variant="outline" onClick={() => setAdjustModalOpen(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={!adjustAmount || !adjustReason.trim()}>
@@ -401,11 +465,7 @@ export default function RunningTabPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setTopUpConfirmOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setTopUpConfirmOpen(false)}>
               No
             </Button>
             <Button
@@ -422,5 +482,111 @@ export default function RunningTabPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+// --- Recent Activity Section ---
+
+function RecentActivitySection({
+  entries,
+}: {
+  entries: TabHistoryEntry[];
+}) {
+
+  return (
+    <section className="flex flex-col gap-3.5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold tracking-tight text-foreground">Recent Activity</h3>
+        <span className="text-[13px] font-semibold text-[#FF6B6B]">See all</span>
+      </div>
+
+      <div className="rounded-[20px] bg-[#F6F7F8] overflow-hidden">
+        {entries.map((entry, index) => {
+          const isPositive = entry.amount > 0;
+          const isNeutral = entry.amount === 0;
+          const label = entry.description || historyTypeLabel[entry.type];
+
+          return (
+            <div key={entry.id}>
+              {index > 0 && (
+                <div className="mx-4 h-px bg-[#E5E7EB]" />
+              )}
+              <div className="flex items-center gap-3 px-4 py-3.5">
+                <HistoryIcon type={entry.type} />
+                <div className="flex flex-col gap-0.5 flex-1 min-w-0">
+                  <span className="text-sm font-semibold text-[#1A1A1A] truncate">
+                    {label}
+                  </span>
+                  <span className="text-xs text-[#9CA3AF]">
+                    {formatRelativeTime(entry.createdAt)}
+                  </span>
+                </div>
+                <span className={`text-sm font-semibold tabular-nums ${
+                  isNeutral ? "text-[#9CA3AF]" : isPositive ? "text-emerald-500" : "text-red-500"
+                }`}>
+                  {isPositive ? "+" : ""}{formatVND(entry.amount)}
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// --- Monthly Summary Section ---
+
+function MonthlySummarySection({
+  totalAdded,
+  totalSpent,
+  expenseCount,
+  monthLabel,
+}: {
+  totalAdded: number;
+  totalSpent: number;
+  expenseCount: number;
+  monthLabel: string;
+}) {
+  function formatShort(value: number): string {
+    if (value >= 1_000_000) {
+      return `${(value / 1_000_000).toFixed(1)}M`;
+    }
+    if (value >= 1_000) {
+      return `${(value / 1_000).toFixed(0)}K`;
+    }
+    return String(value);
+  }
+
+  return (
+    <section className="flex flex-col gap-3.5">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-bold tracking-tight text-foreground">This Month</h3>
+        <span className="text-xs font-semibold text-indigo-500 bg-indigo-50 px-3 py-1.5 rounded-xl">
+          {monthLabel}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2.5">
+        <div className="flex flex-col gap-1.5 rounded-[18px] bg-[#F0FDF4] p-4">
+          <span className="text-2xl font-extrabold text-emerald-500 tracking-tight">
+            {formatShort(totalAdded)}
+          </span>
+          <span className="text-xs font-medium text-[#6B7280]">Added</span>
+        </div>
+        <div className="flex flex-col gap-1.5 rounded-[18px] bg-[#FFF1F2] p-4">
+          <span className="text-2xl font-extrabold text-red-500 tracking-tight">
+            {formatShort(totalSpent)}
+          </span>
+          <span className="text-xs font-medium text-[#6B7280]">Spent</span>
+        </div>
+        <div className="flex flex-col gap-1.5 rounded-[18px] bg-[#F6F7F8] p-4">
+          <span className="text-2xl font-extrabold text-[#1A1A1A] tracking-tight">
+            {expenseCount}
+          </span>
+          <span className="text-xs font-medium text-[#6B7280]">Expenses</span>
+        </div>
+      </div>
+    </section>
   );
 }

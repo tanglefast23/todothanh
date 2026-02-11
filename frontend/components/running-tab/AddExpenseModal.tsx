@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Plus, FileText } from "lucide-react";
+import { useState, useRef, useEffect, useImperativeHandle, useCallback, forwardRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,13 +21,17 @@ interface AddExpenseModalProps {
   onClearPrefilled?: () => void;
 }
 
-export function AddExpenseModal({
+export interface AddExpenseModalHandle {
+  openWithTab: (tab: string) => void;
+}
+
+export const AddExpenseModal = forwardRef<AddExpenseModalHandle, AddExpenseModalProps>(function AddExpenseModal({
   onAddExpense,
   onAddBulkExpenses,
   prefilledName,
   prefilledTab = "simple",
   onClearPrefilled,
-}: AddExpenseModalProps) {
+}, ref) {
   type FocusTarget = "name" | "amount" | "bulk";
 
   const [open, setOpen] = useState(false);
@@ -60,7 +63,7 @@ export function AddExpenseModal({
     setActiveTab("simple");
   };
 
-  const focusField = (target: FocusTarget) => {
+  const focusField = useCallback((target: FocusTarget) => {
     const element =
       target === "name"
         ? nameInputRef.current
@@ -88,14 +91,14 @@ export function AddExpenseModal({
       const cursor = element.value.length;
       element.setSelectionRange(cursor, cursor);
     }
-  };
+  }, []);
 
-  const queueFocusField = (target: FocusTarget) => {
+  const queueFocusField = useCallback((target: FocusTarget) => {
     preferredFocusRef.current = target;
     requestAnimationFrame(() => {
       focusField(target);
     });
-  };
+  }, [focusField]);
 
   const lockTabSelection = (tab: string) => {
     tabLockRef.current = tab;
@@ -132,7 +135,7 @@ export function AddExpenseModal({
         queueFocusField(preferredFocusRef.current);
       }
     }
-  }, [open, prefilledName, prefilledTab]);
+  }, [open, prefilledName, prefilledTab, queueFocusField]);
 
   useEffect(() => {
     return () => {
@@ -266,30 +269,13 @@ export function AddExpenseModal({
     }
   };
 
+  // Expose openWithTab via ref
+  useImperativeHandle(ref, () => ({ openWithTab }));
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {/* Action buttons — matches Pencil MCP design */}
-      <div className="flex gap-2.5">
-        {/* Single expense button */}
-        <button
-          type="button"
-          onClick={() => openWithTab("simple")}
-          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-rose-500 to-rose-600 transition-transform active:scale-95"
-        >
-          <Plus className="size-5" />
-          <span>Single</span>
-        </button>
-
-        {/* Bulk expense button */}
-        <button
-          type="button"
-          onClick={() => openWithTab("bulk")}
-          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-amber-500 to-amber-600 transition-transform active:scale-95"
-        >
-          <FileText className="size-5" />
-          <span>Bulk</span>
-        </button>
-      </div>
+      {/* Action buttons — matches Pencil MCP redesign (rendered via renderButtons) */}
+      <div className="contents" />
       <DialogContent
         className="sm:max-w-md"
         onOpenAutoFocus={(event) => {
@@ -402,7 +388,7 @@ export function AddExpenseModal({
       </DialogContent>
     </Dialog>
   );
-}
+});
 
 /**
  * Parse bulk input text into expense entries.

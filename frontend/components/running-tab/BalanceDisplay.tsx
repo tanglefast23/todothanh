@@ -7,6 +7,7 @@ interface BalanceDisplayProps {
   className?: string;
   canEdit?: boolean;
   onEdit?: () => void;
+  children?: React.ReactNode;
 }
 
 export function formatVND(value: number): string {
@@ -18,7 +19,14 @@ export function formatVND(value: number): string {
   }).format(value);
 }
 
-export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDisplayProps) {
+function formatNumber(value: number): string {
+  return new Intl.NumberFormat("vi-VN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+export function BalanceDisplay({ amount, className, canEdit, onEdit, children }: BalanceDisplayProps) {
   const handleDoubleClick = () => {
     if (canEdit && onEdit) {
       onEdit();
@@ -28,19 +36,29 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDi
   return (
     <div
       className={cn(
-        "rounded-3xl p-6 bg-gradient-to-br from-slate-800 to-slate-950 border border-white/[0.09]",
+        "rounded-3xl py-7 px-6 flex flex-col gap-2",
+        "bg-gradient-to-br from-[#FF6B6B] via-[#FF8E53] to-[#FEB47B]",
         canEdit && "cursor-pointer active:scale-[0.99] transition-transform",
         className,
       )}
       onDoubleClick={handleDoubleClick}
       title={canEdit ? "Double-tap to adjust" : undefined}
     >
-      <p
-        className="py-2 font-mono text-[42px] font-extrabold select-none tabular-nums text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-b from-emerald-300 via-emerald-400 to-emerald-500"
-        style={{ WebkitTextFillColor: "transparent" }}
-      >
-        {formatVND(amount)}
+      <p className="text-sm font-medium text-white/80 select-none">
+        Current Balance
       </p>
+      <p className="text-[42px] font-extrabold leading-none select-none tabular-nums text-white tracking-tight">
+        {formatNumber(amount)}
+      </p>
+      <p className="text-sm font-semibold text-white/60 select-none">
+        VND
+      </p>
+
+      {children && (
+        <div className="flex items-center gap-3 pt-3">
+          {children}
+        </div>
+      )}
     </div>
   );
 }

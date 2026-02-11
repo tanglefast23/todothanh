@@ -62,18 +62,17 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
   // Main shortcuts grid
   if (step === "main") {
     return (
-      <div className="space-y-3">
-        {/* Section label */}
-        <div className="flex items-center justify-center gap-2">
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
-          <span className="text-[10px] uppercase tracking-widest text-muted-foreground/60 font-medium px-2">
-            Quick Add
+      <div className="flex flex-col gap-3.5">
+        {/* Section header */}
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-bold tracking-tight text-foreground">Quick Add</h3>
+          <span className="text-xs font-semibold text-[#FF6B6B] bg-[#FFF1F0] px-3 py-1.5 rounded-xl">
+            6 categories
           </span>
-          <div className="h-px flex-1 bg-gradient-to-r from-transparent via-border to-transparent" />
         </div>
 
-        {/* Grid of shortcuts */}
-        <div className="grid grid-cols-6 gap-2 sm:gap-3">
+        {/* Row 1 */}
+        <div className="grid grid-cols-3 gap-2.5">
           <ShortcutTile
             onClick={() => handleSimpleShortcut("Groceries")}
             label="Groceries"
@@ -93,6 +92,10 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
             color="cyan"
             hasSubmenu
           />
+        </div>
+
+        {/* Row 2 */}
+        <div className="grid grid-cols-3 gap-2.5">
           <ShortcutTile
             onClick={() => handleSimpleShortcut("Food")}
             label="Food"
@@ -345,7 +348,7 @@ function LargeShortcutTile({
       {/* Icon or cat image */}
       <div className={cn(
         "w-20 h-20 rounded-2xl flex items-center justify-center",
-        "bg-background/50 backdrop-blur-sm border border-white/10",
+        "bg-background/50 backdrop-blur-sm border border-border/50",
         "shadow-inner"
       )}>
         {catImage ? (
@@ -380,7 +383,17 @@ function LargeShortcutTile({
   );
 }
 
-// Compact shortcut tile for main grid
+// Tile icon background colors matching the Pencil design
+const tileIconColors = {
+  emerald: { bg: "bg-[#DCFCE7]", text: "text-emerald-500" },
+  amber: { bg: "bg-[#FEF3C7]", text: "text-amber-600" },
+  cyan: { bg: "bg-[#CFFAFE]", text: "text-cyan-600" },
+  rose: { bg: "bg-[#FFE4E6]", text: "text-rose-600" },
+  slate: { bg: "bg-[#F1F5F9]", text: "text-slate-500" },
+  violet: { bg: "bg-[#EDE9FE]", text: "text-violet-600" },
+};
+
+// Compact shortcut tile for main grid — Pencil redesign
 function ShortcutTile({
   label,
   icon: Icon,
@@ -393,62 +406,52 @@ function ShortcutTile({
   icon?: LucideIcon;
   catImage?: "ivory" | "tom" | "both";
   onClick: () => void;
-  color: keyof typeof tileColors;
+  color: keyof typeof tileIconColors;
   hasSubmenu?: boolean;
 }) {
-  const colors = tileColors[color];
+  const iconColors = tileIconColors[color];
 
   return (
     <button
       onClick={onClick}
       className={cn(
-        "group relative aspect-square rounded-2xl border-2 flex flex-col items-center justify-center gap-1",
-        "transition-all duration-200 active:scale-90",
-        "shadow-md hover:shadow-lg",
-        colors.bg,
-        colors.border,
-        colors.glow
+        "group relative flex flex-col items-center justify-center gap-2.5",
+        "h-[88px] rounded-[18px] bg-[#FAFAFA] border border-[#E5E7EB]",
+        "transition-all duration-200 active:scale-95",
       )}
     >
-      {/* Icon container with subtle inner glow */}
+      {/* Colored icon box */}
       <div className={cn(
-        "w-8 h-8 sm:w-9 sm:h-9 rounded-xl flex items-center justify-center",
-        "transition-transform duration-200 group-hover:scale-110"
+        "w-10 h-10 rounded-xl flex items-center justify-center",
+        iconColors.bg,
       )}>
         {catImage ? (
           catImage === "both" ? (
             <div className="flex -space-x-1">
-              <img src="/ivory.PNG" alt="Ivory" className="w-4 h-5 sm:w-5 sm:h-6 rounded object-contain" />
-              <img src="/tom.png" alt="Tom" className="w-4 h-5 sm:w-5 sm:h-6 rounded object-contain" />
+              <img src="/ivory.PNG" alt="Ivory" className="w-4 h-5 rounded object-contain" />
+              <img src="/tom.png" alt="Tom" className="w-4 h-5 rounded object-contain" />
             </div>
           ) : (
             <img
               src={catImage === "ivory" ? "/ivory.PNG" : "/tom.png"}
               alt={catImage === "ivory" ? "Ivory" : "Tom"}
-              className="w-6 h-7 sm:w-7 sm:h-8 rounded object-contain"
+              className="w-6 h-7 rounded object-contain"
             />
           )
         ) : Icon ? (
-          <Icon className={cn("w-5 h-5 sm:w-6 sm:h-6", colors.icon)} strokeWidth={2} />
+          <Icon className={cn("w-5 h-5", iconColors.text)} strokeWidth={2} />
         ) : null}
       </div>
 
       {/* Label */}
-      <span className="text-[9px] sm:text-[10px] font-semibold text-foreground/70 leading-tight">
+      <span className={cn("text-[11px] font-semibold", iconColors.text)}>
         {label}
       </span>
 
-      {/* Submenu indicator - premium pill style */}
+      {/* Submenu indicator */}
       {hasSubmenu && (
-        <div className={cn(
-          "absolute -top-1 -right-1 w-4 h-4 rounded-full",
-          "bg-gradient-to-br from-white/90 to-white/70",
-          "dark:from-white/20 dark:to-white/10",
-          "border border-white/50 dark:border-white/20",
-          "flex items-center justify-center",
-          "shadow-sm"
-        )}>
-          <span className="text-[8px] font-bold text-slate-600 dark:text-white/80">+</span>
+        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 border border-orange-300 flex items-center justify-center shadow-sm">
+          <span className="text-[8px] font-bold text-white">+</span>
         </div>
       )}
     </button>

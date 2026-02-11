@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
-import { ChevronDown, CheckCheck, XIcon } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { Expense, ExpenseWithOwner } from "@/types/runningTab";
 import { ExpenseItem } from "./ExpenseItem";
 import { PendingApproval } from "./PendingApproval";
@@ -118,7 +118,7 @@ export function ExpenseList({
   return (
     <>
       <div className="space-y-6">
-        {/* Pending Section — Pencil-inspired dark card design */}
+        {/* Pending Section — Pencil redesign */}
         {pending.length > 0 && (
           <PendingApproval
             expenses={pending}
@@ -126,6 +126,11 @@ export function ExpenseList({
             onApprove={onApprove}
             onApproveAll={onApproveAll}
             onReject={handleRejectClick}
+            onRejectAll={onRejectAll ? () => {
+              setRejectAllReason("");
+              setRejectAllDialogOpen(true);
+              setTimeout(() => rejectAllReasonRef.current?.focus(), 50);
+            } : undefined}
             onAttachment={onAttachment}
           />
         )}
@@ -137,15 +142,15 @@ export function ExpenseList({
               className="pb-3 cursor-pointer select-none border-b border-emerald-400/10 hover:bg-emerald-500/5 transition-colors"
               onClick={() => setApprovedExpanded(!approvedExpanded)}
             >
-              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-400 to-green-400 flex items-center justify-between font-bold tracking-tight">
+              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-600 to-green-600 flex items-center justify-between font-bold tracking-tight">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
                   <span>Approved</span>
-                  <span className="text-sm font-normal text-emerald-400/70">({approved.length})</span>
+                  <span className="text-sm font-normal text-emerald-500/70">({approved.length})</span>
                 </div>
                 <ChevronDown
                   className={cn(
-                    "h-5 w-5 text-emerald-400 transition-transform duration-300",
+                    "h-5 w-5 text-emerald-500 transition-transform duration-300",
                     approvedExpanded && "rotate-180"
                   )}
                 />
@@ -172,15 +177,15 @@ export function ExpenseList({
               className="pb-3 cursor-pointer select-none border-b border-red-400/10 hover:bg-red-500/5 transition-colors"
               onClick={() => setRejectedExpanded(!rejectedExpanded)}
             >
-              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-400 to-rose-400 flex items-center justify-between font-bold tracking-tight">
+              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-600 to-rose-600 flex items-center justify-between font-bold tracking-tight">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-400" />
+                  <div className="w-2 h-2 rounded-full bg-red-500" />
                   <span>Rejected</span>
-                  <span className="text-sm font-normal text-red-400/70">({rejected.length})</span>
+                  <span className="text-sm font-normal text-red-500/70">({rejected.length})</span>
                 </div>
                 <ChevronDown
                   className={cn(
-                    "h-5 w-5 text-red-400 transition-transform duration-300",
+                    "h-5 w-5 text-red-500 transition-transform duration-300",
                     rejectedExpanded && "rotate-180"
                   )}
                 />
