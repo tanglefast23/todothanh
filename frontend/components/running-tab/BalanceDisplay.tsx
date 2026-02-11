@@ -128,11 +128,17 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDi
               className={cn(
                 "text-4xl sm:text-5xl md:text-6xl font-black tracking-tight select-none tabular-nums",
                 "transition-all duration-300",
-                isPositive
-                  ? "text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-300 via-emerald-400 to-teal-400"
-                  : "text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-300 via-red-400 to-rose-400",
                 canEdit && "group-hover:scale-[1.02] group-active:scale-[0.98]"
               )}
+              style={{
+                background: isPositive
+                  ? 'linear-gradient(to right, rgb(110 231 183), rgb(52 211 153), rgb(45 212 191))'
+                  : 'linear-gradient(to right, rgb(252 165 165), rgb(248 113 113), rgb(251 113 133))',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                color: 'transparent',
+              }}
             >
               {formatVND(amount)}
             </p>
