@@ -146,6 +146,7 @@ export function AddExpenseModal({
     const numAmount = parseInt(amount.replace(/[^0-9]/g, ""), 10);
     if (name.trim() && numAmount > 0) {
       onAddExpense(name.trim(), numAmount);
+      onClearPrefilled?.();
       resetForm();
       setOpen(false);
     }
@@ -162,6 +163,7 @@ export function AddExpenseModal({
         return;
       }
       onAddBulkExpenses(entries);
+      onClearPrefilled?.();
       resetForm();
       setOpen(false);
     } catch (error) {
@@ -197,6 +199,7 @@ export function AddExpenseModal({
       const numAmount = parseInt(amount.replace(/[^0-9]/g, ""), 10);
       if (name.trim() && numAmount > 0) {
         onAddExpense(name.trim(), numAmount);
+        onClearPrefilled?.();
         resetForm();
         setOpen(false);
       }
@@ -241,6 +244,7 @@ export function AddExpenseModal({
       const entries = parseBulkInputSafe(bulkText);
       if (entries.length > 0) {
         onAddBulkExpenses(entries);
+        onClearPrefilled?.();
         resetForm();
         setOpen(false);
       }
@@ -249,6 +253,7 @@ export function AddExpenseModal({
 
   // Open modal with a specific tab
   const openWithTab = (tab: string) => {
+    onClearPrefilled?.();
     lockTabSelection(tab);
     setBulkKeyboardMode("text");
     setActiveTab(tab);
