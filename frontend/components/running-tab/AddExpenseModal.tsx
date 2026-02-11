@@ -65,7 +65,19 @@ export function AddExpenseModal({
 
     element.focus({ preventScroll: true });
 
+    if (target === "name" && element instanceof HTMLInputElement) {
+      // Desktop: highlight existing text. Mobile: caret is ready and keyboard opens.
+      element.select();
+      return;
+    }
+
     if (target === "amount" && element instanceof HTMLInputElement) {
+      const cursor = element.value.length;
+      element.setSelectionRange(cursor, cursor);
+      return;
+    }
+
+    if (target === "bulk" && element instanceof HTMLTextAreaElement) {
       const cursor = element.value.length;
       element.setSelectionRange(cursor, cursor);
     }
@@ -74,7 +86,7 @@ export function AddExpenseModal({
   const queueFocusField = (target: FocusTarget) => {
     preferredFocusRef.current = target;
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => focusField(target));
+      focusField(target);
     });
   };
 
@@ -138,7 +150,7 @@ export function AddExpenseModal({
   const handleNameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      amountInputRef.current?.focus();
+      focusField("amount");
     }
   };
 
@@ -158,14 +170,7 @@ export function AddExpenseModal({
   // Focus name input when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
-    if (isOpen) {
-      preferredFocusRef.current =
-        activeTab === "bulk"
-          ? "bulk"
-          : name.trim()
-            ? "amount"
-            : "name";
-    } else {
+    if (!isOpen) {
       // Clear prefilled name when modal closes
       if (onClearPrefilled) {
         onClearPrefilled();
@@ -178,7 +183,7 @@ export function AddExpenseModal({
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     if (tab === "simple") {
-      queueFocusField(name.trim() ? "amount" : "name");
+      queueFocusField("name");
     } else {
       queueFocusField("bulk");
     }
@@ -201,7 +206,11 @@ export function AddExpenseModal({
   const openWithTab = (tab: string) => {
     setActiveTab(tab);
     preferredFocusRef.current = tab === "simple" ? "name" : "bulk";
-    setOpen(true);
+    if (open) {
+      queueFocusField(preferredFocusRef.current);
+    } else {
+      setOpen(true);
+    }
   };
 
   return (
@@ -210,6 +219,7 @@ export function AddExpenseModal({
       <div className="flex gap-2 sm:gap-3">
         {/* Single expense button */}
         <button
+          type="button"
           onClick={() => openWithTab("simple")}
           className="group relative flex items-center gap-2 px-4 sm:px-5 h-11 sm:h-12 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95 overflow-hidden bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40"
         >
@@ -223,6 +233,7 @@ export function AddExpenseModal({
 
         {/* Bulk expense button with stacked effect */}
         <button
+          type="button"
           onClick={() => openWithTab("bulk")}
           className="group relative flex items-center gap-2 px-4 sm:px-5 h-11 sm:h-12 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95"
         >
@@ -244,7 +255,9 @@ export function AddExpenseModal({
         className="sm:max-w-md"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
-          queueFocusField(preferredFocusRef.current);
+          const target = preferredFocusRef.current;
+          focusField(target);
+          requestAnimationFrame(() => focusField(target));
         }}
       >
         <DialogHeader>
