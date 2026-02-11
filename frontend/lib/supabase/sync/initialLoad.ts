@@ -16,7 +16,7 @@ import {
 } from "@/lib/supabase/queries/permissions";
 import { fetchRunningTab, upsertTab } from "@/lib/supabase/queries/runningTab";
 import { fetchAllExpenses, upsertExpenses } from "@/lib/supabase/queries/expenses";
-import { fetchTabHistory, upsertHistory } from "@/lib/supabase/queries/tabHistory";
+import { fetchRecentTabHistory, upsertHistory } from "@/lib/supabase/queries/tabHistory";
 import { fetchAllScheduledEvents, upsertScheduledEvents } from "@/lib/supabase/queries/scheduled-events";
 
 import { useTasksStore } from "@/stores/tasksStore";
@@ -119,7 +119,7 @@ export async function performInitialLoad(): Promise<void> {
     retryWithBackoff(() => fetchAllPermissions(), 3, "fetchAllPermissions"),
     retryWithBackoff(() => fetchRunningTab(), 3, "fetchRunningTab"),
     retryWithBackoff(() => fetchAllExpenses(), 3, "fetchAllExpenses"),
-    retryWithBackoff(() => fetchTabHistory(), 3, "fetchTabHistory"),
+    retryWithBackoff(() => fetchRecentTabHistory(), 3, "fetchRecentTabHistory"),
     retryWithBackoff(() => fetchAllScheduledEvents(), 3, "fetchAllScheduledEvents"),
   ]);
 

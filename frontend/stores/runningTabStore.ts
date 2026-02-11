@@ -40,10 +40,18 @@ interface RunningTabState {
   expenses: Expense[];
   history: TabHistoryEntry[];
 
+  // Searched history (keyed by "YYYY-MM", persisted to localStorage)
+  searchedHistory: Record<string, TabHistoryEntry[]>;
+
   // Bulk setters for Supabase sync
   setTab: (tab: RunningTab | null) => void;
   setExpenses: (expenses: Expense[]) => void;
   setHistory: (history: TabHistoryEntry[]) => void;
+
+  // Searched history actions
+  setSearchedMonth: (key: string, entries: TabHistoryEntry[]) => void;
+  removeSearchedMonth: (key: string) => void;
+  clearAllSearchedHistory: () => void;
 
   // Tab management
   initializeBalance: (amount: number, initializedBy: string | null) => void;
@@ -78,10 +86,22 @@ export const useRunningTabStore = create<RunningTabState>()(
       tab: null,
       expenses: [],
       history: [],
+      searchedHistory: {},
 
       setTab: (tab) => set({ tab }),
       setExpenses: (expenses) => set({ expenses }),
       setHistory: (history) => set({ history }),
+
+      setSearchedMonth: (key, entries) =>
+        set((state) => ({
+          searchedHistory: { ...state.searchedHistory, [key]: entries },
+        })),
+      removeSearchedMonth: (key) =>
+        set((state) => {
+          const { [key]: _, ...rest } = state.searchedHistory;
+          return { searchedHistory: rest };
+        }),
+      clearAllSearchedHistory: () => set({ searchedHistory: {} }),
 
       initializeBalance: (amount, initializedBy) => {
         const now = new Date().toISOString();
@@ -619,6 +639,9 @@ export const useRunningTabStore = create<RunningTabState>()(
         tab: state.tab,
         expenses: state.expenses,
         // history is intentionally excluded — loaded from cloud on startup
+        // searchedHistory IS persisted — user-initiated searches survive refresh,
+        // managed via per-month delete buttons to control localStorage size
+        searchedHistory: state.searchedHistory,
       }),
     }
   )

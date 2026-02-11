@@ -2,6 +2,7 @@
  * Supabase queries for tab_history table
  * Audit log for all changes to the running tab balance
  */
+import { subMonths, startOfMonth, addMonths } from "date-fns";
 import { getSupabaseClient } from "../client";
 import type { Database } from "@/types/database";
 import type { TabHistoryEntry } from "@/types/runningTab";
@@ -53,6 +54,55 @@ export async function fetchTabHistory(): Promise<TabHistoryEntry[]> {
 
   if (error) {
     console.error("Error fetching tab history:", error);
+    throw error;
+  }
+
+  return ((data as TabHistoryRow[]) || []).map(rowToHistoryEntry);
+}
+
+/**
+ * Fetch tab history entries from the last 6 months only.
+ * Used by initial sync to cap what goes into localStorage.
+ */
+export async function fetchRecentTabHistory(): Promise<TabHistoryEntry[]> {
+  const supabase = getSupabaseClient();
+  const sixMonthsAgo = subMonths(new Date(), 6).toISOString();
+
+  const { data, error } = await supabase
+    .from("tab_history")
+    .select("*")
+    .gte("created_at", sixMonthsAgo)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching recent tab history:", error);
+    throw error;
+  }
+
+  return ((data as TabHistoryRow[]) || []).map(rowToHistoryEntry);
+}
+
+/**
+ * Fetch tab history entries for a specific month.
+ * Used by the Search History feature to load arbitrary past months on demand.
+ */
+export async function fetchTabHistoryByMonth(
+  year: number,
+  month: number
+): Promise<TabHistoryEntry[]> {
+  const supabase = getSupabaseClient();
+  const monthStart = startOfMonth(new Date(year, month - 1));
+  const monthEnd = addMonths(monthStart, 1);
+
+  const { data, error } = await supabase
+    .from("tab_history")
+    .select("*")
+    .gte("created_at", monthStart.toISOString())
+    .lt("created_at", monthEnd.toISOString())
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Error fetching tab history by month:", error);
     throw error;
   }
 
