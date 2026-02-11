@@ -191,28 +191,39 @@ export function AddExpenseModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {/* Two separate trigger buttons */}
-      <div className="flex gap-3">
-        <Button
-          variant="destructive"
-          className="font-semibold text-sm px-4 h-10"
+      {/* Premium action buttons */}
+      <div className="flex gap-2 sm:gap-3">
+        {/* Single expense button */}
+        <button
           onClick={() => openWithTab("simple")}
+          className="group relative flex items-center gap-2 px-4 sm:px-5 h-11 sm:h-12 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95 overflow-hidden bg-gradient-to-r from-rose-500 to-red-500 hover:from-rose-600 hover:to-red-600 text-white shadow-lg shadow-red-500/30 hover:shadow-xl hover:shadow-red-500/40"
         >
-          Simple
-        </Button>
-        <div className="relative">
-          {/* Stacked effect layers - 4 distinct stacks */}
-          <div className="absolute inset-0 bg-red-950/90 rounded-md translate-x-[6px] translate-y-[6px]" />
-          <div className="absolute inset-0 bg-red-900/90 rounded-md translate-x-[4px] translate-y-[4px]" />
-          <div className="absolute inset-0 bg-red-700/90 rounded-md translate-x-[2px] translate-y-[2px]" />
-          <Button
-            variant="destructive"
-            className="relative font-semibold text-sm px-4 h-10"
-            onClick={() => openWithTab("bulk")}
-          >
-            Many
-          </Button>
-        </div>
+          {/* Shine effect */}
+          <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          <span className="relative">Single</span>
+        </button>
+
+        {/* Bulk expense button with stacked effect */}
+        <button
+          onClick={() => openWithTab("bulk")}
+          className="group relative flex items-center gap-2 px-4 sm:px-5 h-11 sm:h-12 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95"
+        >
+          {/* Stacked layers for depth effect */}
+          <span className="absolute inset-0 bg-gradient-to-r from-orange-600 to-amber-600 rounded-2xl translate-x-1.5 translate-y-1.5 opacity-50" />
+          <span className="absolute inset-0 bg-gradient-to-r from-orange-500 to-amber-500 rounded-2xl translate-x-0.5 translate-y-0.5 opacity-70" />
+          <span className="absolute inset-0 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl shadow-lg shadow-orange-500/30 group-hover:shadow-xl group-hover:shadow-orange-500/40 transition-shadow" />
+          {/* Shine effect */}
+          <span className="absolute inset-0 rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+          {/* Icon - stacked papers */}
+          <svg className="relative w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M7 3v3a2 2 0 01-2 2H2" transform="translate(4, 0)" opacity="0.5" />
+          </svg>
+          <span className="relative text-white">Bulk</span>
+        </button>
       </div>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

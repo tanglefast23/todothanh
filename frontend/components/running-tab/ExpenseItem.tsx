@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check, X, FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import { formatVND } from "./BalanceDisplay";
 import { formatRelativeTime } from "@/lib/formatters";
 import type { Expense, ExpenseStatus } from "@/types/runningTab";
@@ -173,20 +174,20 @@ export function ExpenseItem({
   const getCardStyle = () => {
     switch (expense.status) {
       case "approved":
-        return "bg-gradient-to-r from-emerald-500/10 to-green-500/10 border-emerald-400/40";
+        return "bg-gradient-to-br from-emerald-500/8 via-transparent to-green-500/8 border-emerald-400/30 shadow-sm shadow-emerald-500/5";
       case "rejected":
-        return "bg-gradient-to-r from-red-500/10 to-rose-500/10 border-red-400/40";
+        return "bg-gradient-to-br from-red-500/8 via-transparent to-rose-500/8 border-red-400/30 shadow-sm shadow-red-500/5";
       default:
-        return "bg-gradient-to-r from-amber-500/10 to-yellow-500/10 border-amber-400/40";
+        return "bg-gradient-to-br from-amber-500/8 via-transparent to-yellow-500/8 border-amber-400/30 shadow-sm shadow-amber-500/5";
     }
   };
 
   return (
-    <div className={`flex items-start gap-4 p-4 rounded-xl border-2 ${getCardStyle()}`}>
+    <div className={`flex items-start gap-4 p-4 rounded-2xl border-2 transition-all duration-200 hover:scale-[1.01] ${getCardStyle()}`}>
       {/* Item Number */}
       {showNumber && itemNumber && (
         <div
-          className={`flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${numberColor} flex items-center justify-center text-white font-bold text-lg shadow-lg`}
+          className={`flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br ${numberColor} flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white/20`}
         >
           {itemNumber}
         </div>
@@ -196,30 +197,31 @@ export function ExpenseItem({
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
           <ExpenseIconDisplay icon={expenseIcon} />
-          <h4 className="font-medium text-sm truncate">{expense.name}</h4>
+          <h4 className="font-semibold text-sm truncate tracking-tight">{expense.name}</h4>
           {/* Only show status badge for non-pending expenses */}
           {expense.status !== "pending" && (
-            <Badge variant={config.variant} className={config.className}>
+            <Badge variant={config.variant} className={cn(config.className, "shadow-sm")}>
               {config.label}
             </Badge>
           )}
         </div>
 
-        <p className="text-lg font-semibold mt-1">{formatVND(expense.amount)}</p>
+        <p className="text-xl font-bold mt-1.5 tracking-tight tabular-nums">{formatVND(expense.amount)}</p>
 
-        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground flex-wrap">
+        <div className="flex items-center gap-2 mt-2.5 text-xs text-muted-foreground/80 flex-wrap">
           {creatorName && (
-            <span>
-              Created by <span className="font-medium">{creatorName}</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+              <span className="font-medium text-foreground/60">{creatorName}</span>
             </span>
           )}
-          <span>{formatRelativeTime(expense.createdAt)}</span>
+          <span className="opacity-60">{formatRelativeTime(expense.createdAt)}</span>
           {expense.status !== "pending" && approverName && (
             <>
-              <span className="mx-1">|</span>
+              <span className="opacity-30">•</span>
               <span>
-                {expense.status === "approved" ? "Approved" : "Rejected"} by{" "}
-                <span className="font-medium">{approverName}</span>
+                {expense.status === "approved" ? "✓" : "✗"}{" "}
+                <span className="font-medium text-foreground/60">{approverName}</span>
               </span>
             </>
           )}
@@ -227,9 +229,10 @@ export function ExpenseItem({
 
         {/* Rejection Reason - only for rejected expenses */}
         {expense.status === "rejected" && expense.rejectionReason && (
-          <div className="mt-2 px-3 py-2 rounded-md bg-red-500/10 border border-red-500/20">
+          <div className="mt-3 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
             <p className="text-sm text-red-600 dark:text-red-400">
-              <span className="font-medium">Reason:</span> {expense.rejectionReason}
+              <span className="font-semibold">Reason:</span>{" "}
+              <span className="opacity-90">{expense.rejectionReason}</span>
             </p>
           </div>
         )}
@@ -290,20 +293,20 @@ export function ExpenseItem({
           <>
             <Button
               variant="outline"
-              className="h-9 w-9 p-0 rounded-lg text-green-600 hover:text-green-700 hover:bg-green-500/20 border-green-500/50"
+              className="h-10 w-10 p-0 rounded-xl text-emerald-500 hover:text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/40 shadow-sm transition-all duration-200 active:scale-90"
               onClick={() => onApprove(expense.id)}
               title="Approve expense"
             >
-              <Check className="h-4 w-4" />
+              <Check className="h-5 w-5" />
               <span className="sr-only">Approve</span>
             </Button>
             <Button
               variant="outline"
-              className="h-9 w-9 p-0 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-500/20 border-red-500/50"
+              className="h-10 w-10 p-0 rounded-xl text-red-500 hover:text-red-600 hover:bg-red-500/20 border-red-500/40 shadow-sm transition-all duration-200 active:scale-90"
               onClick={() => onReject(expense.id)}
               title="Reject expense"
             >
-              <X className="h-4 w-4" />
+              <X className="h-5 w-5" />
               <span className="sr-only">Reject</span>
             </Button>
           </>

@@ -153,32 +153,35 @@ function BalanceHistorySection({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border-2 border-border/50 bg-gradient-to-br from-card via-card to-muted/20 shadow-lg overflow-hidden">
+      <CardHeader className="pb-3 border-b border-border/30">
         <button
           type="button"
           onClick={() => setIsSectionExpanded(!isSectionExpanded)}
-          className="flex items-center justify-between w-full text-left"
+          className="flex items-center justify-between w-full text-left group"
           aria-expanded={isSectionExpanded}
           aria-controls="balance-history-content"
         >
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Balance History</CardTitle>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors">
+              <History className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-base font-bold tracking-tight">Balance History</CardTitle>
           </div>
-          {isSectionExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-muted-foreground transition-transform duration-300",
+              isSectionExpanded && "rotate-180"
+            )}
+          />
         </button>
-        <CardDescription>
+        <CardDescription className="mt-1.5 text-xs">
           Audit log of all balance changes (last 6 months)
         </CardDescription>
       </CardHeader>
 
       {isSectionExpanded && (
-        <CardContent id="balance-history-content" className="space-y-2">
+        <CardContent id="balance-history-content" className="space-y-2 pt-4 animate-fade-in-up">
           {monthGroups.map((group) => (
             <BalanceMonthGroup
               key={group.key}
@@ -221,41 +224,44 @@ function BalanceMonthGroup({
   const contentId = `balance-month-${group.key}`;
 
   return (
-    <div className="border rounded-md">
+    <div className="border-2 border-border/40 rounded-xl overflow-hidden bg-card/50">
       <button
         type="button"
         onClick={() => onToggle(group.key)}
-        className="flex flex-col gap-1 w-full px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+        className="flex flex-col gap-1.5 w-full px-4 py-3 text-left hover:bg-muted/30 transition-colors"
         aria-expanded={isOpen}
         aria-controls={contentId}
       >
-        <div className="flex items-center gap-2 text-sm font-medium">
-          {isOpen ? (
-            <ChevronDown className="h-4 w-4 shrink-0" />
-          ) : (
-            <ChevronRight className="h-4 w-4 shrink-0" />
-          )}
+        <div className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200",
+              !isOpen && "-rotate-90"
+            )}
+          />
           {group.label}
-          <span className="text-xs text-muted-foreground font-normal">
+          <span className="text-xs text-muted-foreground/70 font-normal">
             ({group.entries.length} {group.entries.length === 1 ? "entry" : "entries"})
           </span>
         </div>
-        <div className="flex items-center gap-3 ml-6 text-xs flex-wrap">
-          <span className="text-green-500">
-            Added: {formatVND(group.stats.totalAdded)}
+        <div className="flex items-center gap-4 ml-6 text-xs flex-wrap">
+          <span className="text-emerald-500 font-medium">
+            +{formatVND(group.stats.totalAdded)}
           </span>
-          <span className="text-red-500">
-            Approved: {formatVND(group.stats.totalApproved)}
+          <span className="text-red-500 font-medium">
+            -{formatVND(group.stats.totalApproved)}
           </span>
-          <span className="text-muted-foreground">
-            Rejected: {formatVND(group.stats.totalRejected)}
-          </span>
+          {group.stats.totalRejected > 0 && (
+            <span className="text-muted-foreground/60">
+              ({formatVND(group.stats.totalRejected)} rejected)
+            </span>
+          )}
         </div>
       </button>
 
       {isOpen && (
-        <div id={contentId} className="px-3 pb-3 border-t">
-          <div className="space-y-3 pt-2">
+        <div id={contentId} className="px-4 pb-4 border-t border-border/30 animate-fade-in-up">
+          <div className="space-y-1 pt-3">
             {enrichedEntries.map((entry) => (
               <HistoryItem key={entry.id} entry={entry} />
             ))}
@@ -352,36 +358,39 @@ function SearchHistorySection({
   );
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
+    <Card className="border-2 border-border/50 bg-gradient-to-br from-card via-card to-muted/20 shadow-lg overflow-hidden">
+      <CardHeader className="pb-3 border-b border-border/30">
         <button
           type="button"
           onClick={() => setIsSectionExpanded(!isSectionExpanded)}
-          className="flex items-center justify-between w-full text-left"
+          className="flex items-center justify-between w-full text-left group"
           aria-expanded={isSectionExpanded}
           aria-controls="search-history-content"
         >
-          <div className="flex items-center gap-2">
-            <Search className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Search History</CardTitle>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary/15 transition-colors">
+              <Search className="h-4 w-4" />
+            </div>
+            <CardTitle className="text-base font-bold tracking-tight">Search History</CardTitle>
           </div>
-          {isSectionExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
+          <ChevronDown
+            className={cn(
+              "h-5 w-5 text-muted-foreground transition-transform duration-300",
+              isSectionExpanded && "rotate-180"
+            )}
+          />
         </button>
-        <CardDescription>
+        <CardDescription className="mt-1.5 text-xs">
           Load any past month from the cloud on demand
         </CardDescription>
       </CardHeader>
 
       {isSectionExpanded && (
-        <CardContent id="search-history-content" className="space-y-4">
+        <CardContent id="search-history-content" className="space-y-4 pt-4 animate-fade-in-up">
           {/* Month/Year picker + Search button */}
           <div className="flex items-center gap-2 flex-wrap">
             <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger size="sm" className="w-[130px]">
+              <SelectTrigger size="sm" className="w-[130px] border-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -394,7 +403,7 @@ function SearchHistorySection({
             </Select>
 
             <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger size="sm" className="w-[90px]">
+              <SelectTrigger size="sm" className="w-[90px] border-2">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -410,7 +419,7 @@ function SearchHistorySection({
               size="sm"
               onClick={handleSearch}
               disabled={isLoading}
-              className="h-8"
+              className="h-8 shadow-sm transition-all duration-200 active:scale-95"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -553,32 +562,33 @@ function HistoryItem({ entry }: HistoryItemProps) {
   const isNeutral = entry.amount === 0;
 
   return (
-    <div className="flex items-start justify-between py-2 border-b last:border-0">
-      <div className="space-y-1">
+    <div className="flex items-start justify-between py-3 border-b border-border/30 last:border-0">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className={cn("text-sm font-medium", config.colorClass)}>
+          <span className={cn("text-sm font-semibold tracking-tight", config.colorClass)}>
             {config.label}
           </span>
         </div>
         {entry.description && (
-          <p className="text-sm text-muted-foreground">{entry.description}</p>
+          <p className="text-sm text-foreground/70">{entry.description}</p>
         )}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-2 text-xs text-muted-foreground/70">
           {entry.creatorName && (
-            <span>
-              By <span className="font-medium">{entry.creatorName}</span>
+            <span className="inline-flex items-center gap-1">
+              <span className="w-1 h-1 rounded-full bg-current opacity-40" />
+              <span className="font-medium text-foreground/50">{entry.creatorName}</span>
             </span>
           )}
-          <span>{formatDateTime(entry.createdAt)}</span>
+          <span className="opacity-70">{formatDateTime(entry.createdAt)}</span>
         </div>
       </div>
       <div
         className={cn(
-          "font-mono text-sm font-medium",
+          "font-mono text-sm font-bold tabular-nums",
           isNeutral
             ? "text-muted-foreground"
             : isPositive
-              ? "text-green-500"
+              ? "text-emerald-500"
               : "text-red-500"
         )}
       >

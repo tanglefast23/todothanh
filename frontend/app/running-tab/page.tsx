@@ -178,8 +178,8 @@ export default function RunningTabPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
 
-      <main className="flex-1 px-4 py-4 sm:px-6">
-        <div className="max-w-3xl mx-auto space-y-4">
+      <main className="flex-1 px-4 py-6 sm:px-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           {/* Show Initialize Form if not initialized (master only) */}
           {!isTabInitialized && isMaster && (
             <InitializeBalanceForm onInitialize={handleInitialize} />
@@ -187,10 +187,13 @@ export default function RunningTabPage() {
 
           {/* Show message if not initialized and not master */}
           {!isTabInitialized && !isMaster && (
-            <Card className="max-w-md mx-auto">
-              <CardHeader>
-                <CardTitle>Tab Not Initialized</CardTitle>
-                <CardDescription>
+            <Card className="max-w-md mx-auto border-2 shadow-lg">
+              <CardHeader className="text-center">
+                <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-muted/50 mx-auto mb-3">
+                  <span className="text-2xl">💳</span>
+                </div>
+                <CardTitle className="text-xl tracking-tight">Tab Not Initialized</CardTitle>
+                <CardDescription className="text-sm">
                   The running tab has not been set up yet. Please ask a master
                   account holder to initialize the starting balance.
                 </CardDescription>
@@ -201,19 +204,19 @@ export default function RunningTabPage() {
           {/* Main Content - only show if initialized */}
           {isTabInitialized && (
             <>
-              {/* Balance Display - double-tap to edit (master only) */}
+              {/* Balance Display - Premium Card */}
               <BalanceDisplay
                 amount={tab.currentBalance}
                 canEdit={isMaster}
                 onEdit={openAdjustModal}
               />
 
-              {/* Expense Actions - Shortcuts + Buttons grouped together */}
-              <section className="space-y-3">
+              {/* Expense Actions Section */}
+              <section className="space-y-5">
                 {/* Quick Expense Shortcuts */}
                 <ExpenseShortcuts onSelectExpense={setPrefilledExpenseName} />
 
-                {/* Action Buttons */}
+                {/* Action Buttons Row */}
                 <div className="flex justify-center items-center gap-3">
                   <AddExpenseModal
                     onAddExpense={handleAddExpense}
@@ -221,14 +224,34 @@ export default function RunningTabPage() {
                     prefilledName={prefilledExpenseName}
                     onClearPrefilled={() => setPrefilledExpenseName("")}
                   />
-                  <Button
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 h-10"
+
+                  {/* Premium Top-Up Button */}
+                  <button
                     onClick={() => setTopUpConfirmOpen(true)}
+                    className="group relative flex items-center gap-2 px-4 sm:px-5 h-11 sm:h-12 rounded-2xl font-semibold text-sm transition-all duration-300 active:scale-95 overflow-hidden bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-lg shadow-emerald-500/30 hover:shadow-xl hover:shadow-emerald-500/40"
                   >
-                    +5M
-                  </Button>
+                    {/* Shine effect */}
+                    <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+                    {/* Plus icon */}
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                    <span className="relative font-bold">5M</span>
+                  </button>
                 </div>
               </section>
+
+              {/* Section Divider */}
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="px-4 text-[10px] uppercase tracking-widest text-muted-foreground/50 bg-background font-medium">
+                    Expenses
+                  </span>
+                </div>
+              </div>
 
               {/* Expense List - each section has its own card */}
               <ExpenseList
@@ -247,10 +270,10 @@ export default function RunningTabPage() {
 
               {/* Clear All Button - Admin only, at the very bottom */}
               {isMaster && (expenses.filter(e => e.status !== "pending").length > 0) && (
-                <div className="flex justify-center pt-8 pb-4">
+                <div className="flex justify-center pt-8 pb-6">
                   <Button
                     variant="outline"
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950 border-red-300 dark:border-red-800"
+                    className="text-red-500 hover:text-red-600 hover:bg-red-500/10 border-red-500/30 hover:border-red-500/50 shadow-sm transition-all duration-200 active:scale-95"
                     onClick={() => setClearAllModalOpen(true)}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
