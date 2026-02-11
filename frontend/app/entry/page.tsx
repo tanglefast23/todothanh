@@ -22,7 +22,6 @@ export default function EntryPage() {
 
   // Owner state
   const getActiveOwnerId = useOwnerStore((state) => state.getActiveOwnerId);
-  const isMasterLoggedIn = useOwnerStore((state) => state.isMasterLoggedIn);
 
   // Hydration-safe
   const [isMounted, setIsMounted] = useState(false);
@@ -31,7 +30,6 @@ export default function EntryPage() {
   }, []);
 
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
-  const isMaster = isMounted ? isMasterLoggedIn() : false;
 
 
   // Handle adding a new task
@@ -72,13 +70,10 @@ export default function EntryPage() {
         <div className="max-w-3xl mx-auto space-y-6">
           <h1 className="text-2xl font-bold">Entry</h1>
 
-          {/* Add Task Form - Master only */}
-          {isMaster && (
-            <AddTaskForm
-              onAddTask={handleAddTask}
-              disabled={!isMounted || !activeOwnerId}
-            />
-          )}
+          <AddTaskForm
+            onAddTask={handleAddTask}
+            disabled={!isMounted || !activeOwnerId}
+          />
 
           {/* Schedule Event Form - All users */}
           <ScheduleTaskForm
