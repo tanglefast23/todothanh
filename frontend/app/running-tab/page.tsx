@@ -79,6 +79,9 @@ export default function RunningTabPage() {
   const [prefilledExpenseName, setPrefilledExpenseName] = useState("");
   const [prefilledExpenseTab, setPrefilledExpenseTab] = useState<"simple" | "bulk">("simple");
 
+  // Proxy input ref for capturing mobile keyboard focus on shortcut tap
+  const proxyFocusRef = useRef<HTMLInputElement>(null);
+
   // Permissions
   const canApproveExpenses = usePermissionsStore((state) => state.canApproveExpenses);
 
@@ -127,6 +130,10 @@ export default function RunningTabPage() {
   };
 
   const handleShortcutSelectExpense = (name: string, tab: "simple" | "bulk" = "simple") => {
+    // Synchronously focus the proxy input to capture the user gesture on iOS.
+    // This opens the numeric keyboard immediately; focus transfers to the real
+    // amount input once the dialog mounts, keeping the keyboard open.
+    proxyFocusRef.current?.focus({ preventScroll: true });
     setPrefilledExpenseTab(tab);
     setPrefilledExpenseName(name);
   };
@@ -182,6 +189,15 @@ export default function RunningTabPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Hidden proxy input: focused synchronously on shortcut tap to open iOS numeric keyboard */}
+      <input
+        ref={proxyFocusRef}
+        type="tel"
+        inputMode="numeric"
+        aria-hidden="true"
+        tabIndex={-1}
+        style={{ position: 'fixed', opacity: 0, top: 0, left: 0, width: '1px', height: '1px', padding: 0, border: 'none', pointerEvents: 'none' }}
+      />
       <Header />
 
       <main className="flex-1 px-4 py-6 sm:px-6">

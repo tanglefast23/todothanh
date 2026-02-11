@@ -308,8 +308,12 @@ export function AddExpenseModal({
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           const target = preferredFocusRef.current;
+          // Attempt focus immediately, then retry after a frame and a short
+          // delay. On mobile, the keyboard is already open via the proxy input;
+          // these calls transfer focus to the real field so it stays open.
           focusField(target);
           requestAnimationFrame(() => focusField(target));
+          setTimeout(() => focusField(target), 50);
         }}
       >
         <DialogHeader>
