@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { ScheduledEventItem } from "./ScheduledEventItem";
 import type { ScheduledEvent } from "@/types/scheduled-events";
-import { CalendarDays, CheckCircle2 } from "lucide-react";
+import { CalendarDays, CircleCheckBig } from "lucide-react";
 import {
   format,
   isToday,
@@ -99,18 +99,18 @@ export function ScheduledEventList({
     <div className="space-y-10">
       {/* Upcoming Events */}
       {pendingByDay.length > 0 && (
-        <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-violet-400 flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            Upcoming
-          </h2>
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-5 w-5 text-[#7C3AED]" />
+            <h2 className="font-display text-xl text-[#1A1A1A]">Upcoming</h2>
+          </div>
 
           {pendingByDay.map((dayGroup) => (
             <div key={dayGroup.dateKey} className="space-y-3">
-              <h3 className="text-3xl font-bold tracking-tight text-foreground">
+              <h3 className="font-display text-[26px] leading-tight text-[#1A1A1A]">
                 {dayGroup.displayDate}
               </h3>
-              <div className="space-y-3 pl-1">
+              <div className="space-y-3">
                 {dayGroup.events.map((event) => (
                   <ScheduledEventItem
                     key={event.id}
@@ -133,18 +133,18 @@ export function ScheduledEventList({
 
       {/* Completed Events */}
       {completedByDay.length > 0 && (
-        <div className="space-y-6">
-          <h2 className="text-lg font-semibold text-emerald-400 flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5" />
-            Completed
-          </h2>
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <CircleCheckBig className="h-5 w-5 text-[#22C55E]" />
+            <h2 className="font-display text-xl text-[#1A1A1A]">Completed</h2>
+          </div>
 
           {completedByDay.map((dayGroup) => (
             <div key={dayGroup.dateKey} className="space-y-3">
-              <h3 className="text-3xl font-bold tracking-tight text-foreground/70">
+              <h3 className="font-display text-[22px] leading-tight text-[#1A1A1A]/70">
                 {dayGroup.displayDate}
               </h3>
-              <div className="space-y-3 pl-1">
+              <div className="space-y-3">
                 {dayGroup.events.map((event) => (
                   <ScheduledEventItem
                     key={event.id}

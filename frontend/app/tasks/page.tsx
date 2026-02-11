@@ -84,7 +84,10 @@ export default function TasksPage() {
 
       <main className="flex-1 p-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="font-display text-3xl md:text-4xl tracking-tight">Tasks</h1>
+          <div>
+            <h1 className="font-display text-3xl md:text-4xl tracking-tight">Tasks</h1>
+            <p className="text-sm text-[#9CA3AF] mt-0.5">Stay on top of things</p>
+          </div>
 
           {/* Task List */}
           <TaskList

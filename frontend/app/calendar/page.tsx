@@ -76,7 +76,10 @@ export default function CalendarPage() {
 
       <main className="flex-1 p-6">
         <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="font-display text-3xl md:text-4xl tracking-tight">Calendar</h1>
+          <div>
+            <h1 className="font-display text-3xl md:text-4xl tracking-tight">Calendar</h1>
+            <p className="text-sm text-[#9CA3AF] mt-0.5">Scheduled events</p>
+          </div>
 
           {/* Scheduled Event List */}
           <ScheduledEventList

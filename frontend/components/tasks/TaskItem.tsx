@@ -76,18 +76,15 @@ export function TaskItem({
   // Determine card style based on priority and completion status
   const getCardStyle = () => {
     if (isCompleted) {
-      return "bg-gradient-to-r from-emerald-500/10 to-green-500/10 border-emerald-500/30";
+      return "bg-[#F0FDF4] border-transparent";
     }
-    if (task.priority === "urgent") {
-      return "bg-gradient-to-r from-orange-500/15 to-red-500/15 border-orange-400/40 hover:border-orange-400/60";
-    }
-    return "bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border-cyan-400/30 hover:border-cyan-400/50";
+    return "bg-white border-transparent";
   };
 
   return (
     <div
       className={cn(
-        "relative flex flex-col gap-2 p-4 rounded-xl border-2 transition-all",
+        "relative flex flex-col gap-2 p-3 rounded-[14px] border transition-all",
         getCardStyle(),
         isCompleted && "opacity-70",
         showDeleteConfirm && "ring-2 ring-destructive"
@@ -185,12 +182,12 @@ export function TaskItem({
           onCheckedChange={handleCheckChange}
           disabled={!canComplete}
           className={cn(
-            "h-5 w-5 border-2 mt-0.5 flex-shrink-0",
+            "h-5 w-5 border-2 mt-0.5 flex-shrink-0 rounded-md",
             isCompleted
-              ? "border-emerald-500 data-[state=checked]:bg-emerald-500"
+              ? "border-[#22C55E] data-[state=checked]:bg-[#22C55E]"
               : task.priority === "urgent"
-                ? "border-orange-400"
-                : "border-cyan-400"
+                ? "border-[#F97316]"
+                : "border-[#0891B2]"
           )}
         />
 

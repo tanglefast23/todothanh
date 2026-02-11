@@ -90,14 +90,14 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
   return (
     <>
       <div className="space-y-5">
-        {/* Bold section header */}
-        <div className="flex items-baseline justify-between">
-          <h2 className="font-display text-2xl md:text-3xl tracking-tight text-foreground">
-            Schedule
-          </h2>
-          <span className="text-xs font-semibold uppercase tracking-widest text-orange-500/60">
+        {/* Section header with numbered badge */}
+        <div className="flex items-center gap-2">
+          <span className="flex items-center justify-center w-7 h-7 rounded-full bg-[#F6F7F8] text-[11px] font-bold text-[#9CA3AF]">
             02
           </span>
+          <h2 className="font-display text-xl tracking-tight text-[#1A1A1A]">
+            Schedule
+          </h2>
         </div>
 
         {/* Desktop Layout */}
@@ -106,15 +106,10 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
             ref={inputRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="What's coming up?"
+            placeholder="Event title..."
             aria-label="Event title"
             disabled={disabled}
-            className={cn(
-              "w-full rounded-2xl border-2 bg-background/60 px-5 py-4 text-base outline-none transition-all duration-300",
-              "placeholder:text-muted-foreground/40 placeholder:font-light",
-              "focus:border-orange-400 focus:bg-background focus:shadow-[0_0_0_4px_oklch(0.65_0.20_45/0.1)]",
-              "disabled:cursor-not-allowed disabled:opacity-50"
-            )}
+            className="w-full rounded-2xl border-2 border-[#E5E7EB] bg-[#F6F7F8] px-[18px] h-[52px] text-[15px] outline-none transition-all duration-200 placeholder:text-[#C0C4CC] focus:border-violet-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(124,58,237,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -123,23 +118,21 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
             }}
           />
 
-          <div className="flex justify-end">
-            <button
-              type="button"
-              onClick={handleScheduleClick}
-              disabled={disabled || !hasContent}
-              className={cn(
-                "btn-chunky px-6 py-3 text-sm rounded-xl",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                hasContent
-                  ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20 hover:shadow-violet-600/30 hover:bg-violet-700"
-                  : "bg-muted/40 text-muted-foreground/30"
-              )}
-            >
-              <CalendarIcon className="h-4 w-4" />
-              Schedule
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={handleScheduleClick}
+            disabled={disabled || !hasContent}
+            className={cn(
+              "flex items-center justify-center gap-2 w-full h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              hasContent
+                ? "bg-[#7C3AED] text-white shadow-md hover:bg-[#6D28D9] active:scale-[0.97]"
+                : "bg-muted/40 text-muted-foreground/30"
+            )}
+          >
+            <CalendarIcon className="h-[18px] w-[18px]" />
+            Schedule Event
+          </button>
         </div>
 
         {/* Mobile Layout */}
@@ -148,16 +141,11 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
             ref={textareaRef}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="What's coming up?"
+            placeholder="Event title..."
             aria-label="Event title"
             disabled={disabled}
-            rows={3}
-            className={cn(
-              "w-full rounded-2xl border-2 bg-background/60 px-5 py-4 text-base resize-none outline-none transition-all duration-300",
-              "placeholder:text-muted-foreground/40 placeholder:font-light",
-              "focus:border-orange-400 focus:bg-background focus:shadow-[0_0_0_4px_oklch(0.65_0.20_45/0.1)]",
-              "disabled:cursor-not-allowed disabled:opacity-50"
-            )}
+            rows={2}
+            className="w-full rounded-2xl border-2 border-[#E5E7EB] bg-[#F6F7F8] px-[18px] py-4 text-[15px] resize-none outline-none transition-all duration-200 placeholder:text-[#C0C4CC] focus:border-violet-400 focus:bg-white focus:shadow-[0_0_0_4px_rgba(124,58,237,0.1)] disabled:cursor-not-allowed disabled:opacity-50"
           />
 
           <button
@@ -165,15 +153,15 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
             onClick={handleScheduleClick}
             disabled={disabled || !hasContent}
             className={cn(
-              "btn-chunky w-full py-4 text-sm rounded-xl",
+              "flex items-center justify-center gap-2 w-full h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasContent
-                ? "bg-violet-600 text-white shadow-lg shadow-violet-600/20"
+                ? "bg-[#7C3AED] text-white shadow-md active:scale-[0.97]"
                 : "bg-muted/40 text-muted-foreground/30"
             )}
           >
-            <CalendarIcon className="h-4 w-4" />
-            Schedule
+            <CalendarIcon className="h-[18px] w-[18px]" />
+            Schedule Event
           </button>
         </div>
       </div>

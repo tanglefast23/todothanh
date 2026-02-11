@@ -56,12 +56,12 @@ export default function EntryPage() {
     <div className="flex flex-col min-h-screen page-atmosphere">
       <Header />
 
-      <main className="flex-1 px-5 py-4 md:px-10 md:py-8">
-        <div className="max-w-xl mx-auto bold-stagger space-y-6">
+      <main className="flex-1 px-6 py-5 md:px-10 md:py-8">
+        <div className="max-w-xl mx-auto space-y-7">
           {/* Task creation card */}
           <section
             aria-label="Add a new task"
-            className="bold-card p-6 md:p-8"
+            className="rounded-3xl bg-white border border-[#F3F4F6] p-6"
           >
             <AddTaskForm
               onAddTask={handleAddTask}
@@ -72,7 +72,7 @@ export default function EntryPage() {
           {/* Schedule event card */}
           <section
             aria-label="Schedule an event"
-            className="bold-card p-6 md:p-8"
+            className="rounded-3xl bg-white border border-[#F3F4F6] p-6"
           >
             <ScheduleTaskForm
               onScheduleTask={handleScheduleEvent}

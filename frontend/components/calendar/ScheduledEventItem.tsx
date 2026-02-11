@@ -69,29 +69,32 @@ export function ScheduledEventItem({
     setShowDeleteConfirm(true);
   };
 
-  // Determine card style based on completion, timing, and creator type
-  // Master events = purple/violet, Non-master events = blue
+  // Color-coded gradient cards per Pencil design
   const getCardStyle = () => {
     if (isCompleted) {
-      return "bg-gradient-to-r from-emerald-500/10 to-green-500/10 border-emerald-500/30";
+      return "bg-gradient-to-b from-[#F0FDF4] to-[#DCFCE7] border-[#BBF7D0]";
     }
     if (isOverdue) {
-      return "bg-gradient-to-r from-red-500/15 to-orange-500/15 border-red-400/40 hover:border-red-400/60";
+      return "bg-gradient-to-b from-[#FFF1F2] to-[#FFE4E6] border-[#FCA5A5]";
     }
     if (isToday(scheduledDate)) {
-      return "bg-gradient-to-r from-amber-500/15 to-yellow-500/15 border-amber-400/40 hover:border-amber-400/60";
+      return "bg-gradient-to-b from-[#FFFBEB] to-[#FEF9C3] border-[#FCD34D]";
     }
-    // Non-master events are blue, master events are purple
-    if (isCreatorMaster) {
-      return "bg-gradient-to-r from-violet-500/10 to-purple-500/10 border-violet-400/30 hover:border-violet-400/50";
-    }
-    return "bg-gradient-to-r from-blue-500/10 to-sky-500/10 border-blue-400/30 hover:border-blue-400/50";
+    return "bg-gradient-to-b from-[#F5F3FF] to-[#EDE9FE] border-[#DDD6FE]";
+  };
+
+  // Accent color for checkbox and time
+  const getAccentColor = () => {
+    if (isCompleted) return "#22C55E";
+    if (isOverdue) return "#EF4444";
+    if (isToday(scheduledDate)) return "#F59E0B";
+    return "#7C3AED";
   };
 
   return (
     <div
       className={cn(
-        "relative flex flex-col gap-2 p-4 rounded-xl border-2 transition-all",
+        "relative flex flex-col gap-1.5 p-4 rounded-[18px] border-[1.5px] transition-all",
         getCardStyle(),
         isCompleted && "opacity-70",
         showDeleteConfirm && "ring-2 ring-destructive"
@@ -143,18 +146,11 @@ export function ScheduledEventItem({
           checked={isCompleted}
           onCheckedChange={handleCheckChange}
           disabled={!canComplete}
-          className={cn(
-            "h-5 w-5 border-2 mt-0.5 flex-shrink-0",
-            isCompleted
-              ? "border-emerald-500 data-[state=checked]:bg-emerald-500"
-              : isOverdue
-                ? "border-red-400"
-                : isToday(scheduledDate)
-                  ? "border-amber-400"
-                  : isCreatorMaster
-                    ? "border-violet-400"
-                    : "border-blue-400"
-          )}
+          className="h-5 w-5 border-2 mt-0.5 flex-shrink-0 rounded-md"
+          style={{
+            borderColor: getAccentColor(),
+            ...(isCompleted ? { backgroundColor: getAccentColor() } : {}),
+          }}
         />
 
         <div className="flex-1 min-w-0">
@@ -167,22 +163,16 @@ export function ScheduledEventItem({
       </div>
 
       {/* Scheduled time row */}
-      <div className="flex items-center gap-4 text-sm pl-8">
-        <div className={cn(
-          "flex items-center gap-1.5",
-          isCompleted
-            ? "text-muted-foreground"
-            : isOverdue
-              ? "text-red-400"
-              : isCreatorMaster
-                ? "text-violet-400"
-                : "text-blue-400"
-        )}>
-          <Clock className="h-4 w-4" />
-          <span className="font-medium">{format(scheduledDate, "h:mm a")}</span>
+      <div className="flex items-center gap-4 text-[13px] pl-8">
+        <div
+          className="flex items-center gap-1.5"
+          style={{ color: isCompleted ? "#9CA3AF" : getAccentColor() }}
+        >
+          <Clock className="h-3.5 w-3.5" />
+          <span className="font-semibold">{format(scheduledDate, "h:mm a")}</span>
         </div>
         {isOverdue && !isCompleted && (
-          <span className="text-xs text-red-400 font-medium">Overdue</span>
+          <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-[#EF4444] text-white">Overdue</span>
         )}
       </div>
 
