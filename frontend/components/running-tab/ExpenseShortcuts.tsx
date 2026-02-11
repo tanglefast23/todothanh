@@ -20,7 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface ExpenseShortcutsProps {
-  onSelectExpense: (name: string) => void;
+  onSelectExpense: (name: string, tab?: "simple" | "bulk") => void;
 }
 
 type ShortcutStep = "main" | "drinks" | "cats" | "cats-expense";
@@ -36,12 +36,12 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
 
   // Simple shortcuts - single tap
   const handleSimpleShortcut = (name: string) => {
-    onSelectExpense(name);
+    onSelectExpense(name, "simple");
   };
 
   // Drinks sub-options
   const handleDrinksSelect = (drinkType: string) => {
-    onSelectExpense(drinkType);
+    onSelectExpense(drinkType, "bulk");
     resetToMain();
   };
 
@@ -54,7 +54,7 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
   // Cats - then select expense type
   const handleCatExpenseSelect = (expenseType: string) => {
     if (selectedCat) {
-      onSelectExpense(`${selectedCat} - ${expenseType}`);
+      onSelectExpense(`${selectedCat} - ${expenseType}`, "bulk");
     }
     resetToMain();
   };

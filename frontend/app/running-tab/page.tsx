@@ -77,6 +77,7 @@ export default function RunningTabPage() {
 
   // Prefilled expense name from shortcuts
   const [prefilledExpenseName, setPrefilledExpenseName] = useState("");
+  const [prefilledExpenseTab, setPrefilledExpenseTab] = useState<"simple" | "bulk">("simple");
 
   // Permissions
   const canApproveExpenses = usePermissionsStore((state) => state.canApproveExpenses);
@@ -123,6 +124,11 @@ export default function RunningTabPage() {
 
   const handleAttachment = (expenseId: string, url: string) => {
     setAttachment(expenseId, url);
+  };
+
+  const handleShortcutSelectExpense = (name: string, tab: "simple" | "bulk" = "simple") => {
+    setPrefilledExpenseTab(tab);
+    setPrefilledExpenseName(name);
   };
 
   // Balance adjustment handlers
@@ -214,7 +220,7 @@ export default function RunningTabPage() {
               {/* Expense Actions Section */}
               <section className="space-y-5">
                 {/* Quick Expense Shortcuts */}
-                <ExpenseShortcuts onSelectExpense={setPrefilledExpenseName} />
+                <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} />
 
                 {/* Action Buttons Row */}
                 <div className="flex justify-center items-center gap-3">
@@ -222,7 +228,11 @@ export default function RunningTabPage() {
                     onAddExpense={handleAddExpense}
                     onAddBulkExpenses={handleAddBulkExpenses}
                     prefilledName={prefilledExpenseName}
-                    onClearPrefilled={() => setPrefilledExpenseName("")}
+                    prefilledTab={prefilledExpenseTab}
+                    onClearPrefilled={() => {
+                      setPrefilledExpenseName("");
+                      setPrefilledExpenseTab("simple");
+                    }}
                   />
 
                   {/* Premium Top-Up Button */}

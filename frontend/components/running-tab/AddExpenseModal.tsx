@@ -17,6 +17,7 @@ interface AddExpenseModalProps {
   onAddExpense: (name: string, amount: number) => void;
   onAddBulkExpenses: (entries: { name: string; amount: number }[]) => void;
   prefilledName?: string;
+  prefilledTab?: "simple" | "bulk";
   onClearPrefilled?: () => void;
 }
 
@@ -24,6 +25,7 @@ export function AddExpenseModal({
   onAddExpense,
   onAddBulkExpenses,
   prefilledName,
+  prefilledTab = "simple",
   onClearPrefilled,
 }: AddExpenseModalProps) {
   type FocusTarget = "name" | "amount" | "bulk";
@@ -46,12 +48,14 @@ export function AddExpenseModal({
   // Bulk form state
   const [bulkText, setBulkText] = useState("");
   const [bulkError, setBulkError] = useState<string | null>(null);
+  const [bulkKeyboardMode, setBulkKeyboardMode] = useState<"text" | "numeric">("text");
 
   const resetForm = () => {
     setName("");
     setAmount("");
     setBulkText("");
     setBulkError(null);
+    setBulkKeyboardMode("text");
     setActiveTab("simple");
   };
 
@@ -106,18 +110,28 @@ export function AddExpenseModal({
   // Handle prefilled name from shortcuts
   useEffect(() => {
     if (prefilledName) {
-      lockTabSelection("simple");
+      const shortcutTab = prefilledTab === "bulk" ? "bulk" : "simple";
+      lockTabSelection(shortcutTab);
       setName(prefilledName);
-      setActiveTab("simple");
-      preferredFocusRef.current = "amount";
+      setActiveTab(shortcutTab);
+
+      if (shortcutTab === "bulk") {
+        setBulkText(`${prefilledName} `);
+        setBulkError(null);
+        setBulkKeyboardMode("numeric");
+        preferredFocusRef.current = "bulk";
+      } else {
+        setBulkKeyboardMode("text");
+        preferredFocusRef.current = "amount";
+      }
 
       if (!open) {
         setOpen(true);
       } else {
-        queueFocusField("amount");
+        queueFocusField(preferredFocusRef.current);
       }
     }
-  }, [open, prefilledName]);
+  }, [open, prefilledName, prefilledTab]);
 
   useEffect(() => {
     return () => {
@@ -211,6 +225,7 @@ export function AddExpenseModal({
     if (tabLockRef.current && tab !== tabLockRef.current) {
       return;
     }
+    setBulkKeyboardMode("text");
     setActiveTab(tab);
     if (tab === "simple") {
       queueFocusField("name");
@@ -235,6 +250,7 @@ export function AddExpenseModal({
   // Open modal with a specific tab
   const openWithTab = (tab: string) => {
     lockTabSelection(tab);
+    setBulkKeyboardMode("text");
     setActiveTab(tab);
     preferredFocusRef.current = tab === "simple" ? "name" : "bulk";
     if (open) {
@@ -361,6 +377,7 @@ export function AddExpenseModal({
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
                   onKeyDown={handleBulkKeyDown}
+                  inputMode={bulkKeyboardMode}
                   placeholder="coffee 50000, lunch 120000, snacks 30000"
                   className="flex min-h-[120px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                 />
