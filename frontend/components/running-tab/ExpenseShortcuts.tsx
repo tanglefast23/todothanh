@@ -41,7 +41,7 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
 
   // Drinks sub-options
   const handleDrinksSelect = (drinkType: string) => {
-    onSelectExpense(drinkType, "bulk");
+    onSelectExpense(drinkType, "simple");
     resetToMain();
   };
 
@@ -54,7 +54,7 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
   // Cats - then select expense type
   const handleCatExpenseSelect = (expenseType: string) => {
     if (selectedCat) {
-      onSelectExpense(`${selectedCat} - ${expenseType}`, "bulk");
+      onSelectExpense(`${selectedCat} - ${expenseType}`, "simple");
     }
     resetToMain();
   };
