@@ -253,7 +253,7 @@ export function OwnerManagement() {
                         <div className="flex items-center gap-2">
                           <span className="font-semibold">{owner.name}</span>
                           {owner.isMaster && (
-                            <span className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-full font-medium">
+                            <span className="text-[10px] bg-amber-500/20 text-amber-600 px-1.5 py-0.5 rounded-full font-medium">
                               Master
                             </span>
                           )}

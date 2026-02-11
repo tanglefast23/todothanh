@@ -230,7 +230,7 @@ export function ExpenseItem({
         {/* Rejection Reason - only for rejected expenses */}
         {expense.status === "rejected" && expense.rejectionReason && (
           <div className="mt-3 px-3 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20">
-            <p className="text-sm text-red-600 dark:text-red-400">
+            <p className="text-sm text-red-600">
               <span className="font-semibold">Reason:</span>{" "}
               <span className="opacity-90">{expense.rejectionReason}</span>
             </p>

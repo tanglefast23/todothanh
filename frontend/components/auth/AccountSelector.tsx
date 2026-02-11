@@ -321,7 +321,7 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
                   "relative w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full shadow-lg transition-transform duration-300 ease-out overflow-hidden",
                   !profilePic && colors.bg,
                   "group-hover:scale-[1.15] sm:group-hover:scale-[1.3] group-hover:ring-4 group-hover:ring-offset-2 group-hover:ring-offset-background",
-                  profilePic ? "ring-gray-300 dark:ring-gray-600" : colors.ring
+                  profilePic ? "ring-gray-300" : colors.ring
                 )}
               >
                 {profilePic ? (
@@ -344,7 +344,7 @@ export function AccountSelector({ onLoginSuccess }: AccountSelectorProps) {
               <div className="text-center transition-transform duration-300 ease-out group-hover:scale-[1.3] sm:group-hover:scale-[1.6]">
                 <p className="font-semibold text-foreground text-sm sm:text-base">{owner.name}</p>
                 {owner.isMaster && (
-                  <p className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400">Master</p>
+                  <p className="text-[10px] sm:text-xs text-amber-600">Master</p>
                 )}
               </div>
             </button>

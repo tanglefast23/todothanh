@@ -36,7 +36,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               className={cn(
                 "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
                 isActive
-                  ? "text-violet-400"
+                  ? "text-orange-500"
                   : "text-muted-foreground hover:text-foreground"
               )}
               aria-label={item.title}
@@ -50,7 +50,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               />
               <span className={cn(
                 "text-xs font-medium",
-                isActive && "text-violet-400"
+                isActive && "text-orange-500"
               )}>
                 {item.title}
               </span>

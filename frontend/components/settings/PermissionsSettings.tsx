@@ -143,7 +143,7 @@ export function PermissionsSettings() {
         <CardTitle>User Accounts & Permissions</CardTitle>
         <CardDescription>
           {!hasAnyAdmin ? (
-            <span className="text-amber-600 dark:text-amber-400">
+            <span className="text-amber-600">
               No admins exist. Toggle admin privileges on any account to bootstrap.
             </span>
           ) : (
@@ -254,9 +254,9 @@ export function PermissionsSettings() {
 
                 {/* Show all permissions enabled for admins */}
                 {owner.isMaster && (
-                  <div className="text-sm text-muted-foreground bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg">
-                    <p className="font-medium text-amber-700 dark:text-amber-400 mb-1">Admin Access</p>
-                    <ul className="space-y-1 text-amber-600 dark:text-amber-300">
+                  <div className="text-sm text-muted-foreground bg-amber-50 p-3 rounded-lg">
+                    <p className="font-medium text-amber-700 mb-1">Admin Access</p>
+                    <ul className="space-y-1 text-amber-600">
                       <li className="flex items-center gap-2">
                         <CheckCircle className="h-3 w-3" /> Complete tasks
                       </li>

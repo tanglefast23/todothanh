@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { DM_Sans, JetBrains_Mono } from "next/font/google";
+import { DM_Sans, JetBrains_Mono, Baloo_2 } from "next/font/google";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
@@ -20,6 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600"],
+});
+
+const baloo2 = Baloo_2({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -46,7 +52,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
-  themeColor: "#09090b",
+  themeColor: "#fb923c",
 };
 
 export default function RootLayout({
@@ -56,7 +62,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${dmSans.variable} ${jetbrainsMono.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${dmSans.variable} ${jetbrainsMono.variable} ${baloo2.variable} font-sans antialiased`} suppressHydrationWarning>
         <QueryProvider>
           <SupabaseSyncProvider>
             <ThemeProvider>

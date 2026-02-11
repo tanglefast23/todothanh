@@ -139,7 +139,7 @@ export function Header() {
                 className={cn(
                   "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
                   isActive
-                    ? "bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-400 border border-violet-400/30"
+                    ? "bg-orange-500/15 text-orange-600 border border-orange-400/30"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
               >
@@ -241,7 +241,7 @@ export function Header() {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={handleOwnerLogout} className="text-red-600 dark:text-red-400">
+              <DropdownMenuItem onClick={handleOwnerLogout} className="text-red-600">
                 <LogOut className="mr-2 h-4 w-4" />
                 Switch Account
               </DropdownMenuItem>

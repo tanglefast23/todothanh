@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ListPlus } from "lucide-react";
+import { Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { TaskPriority } from "@/types/tasks";
 
@@ -42,15 +42,19 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
   const hasContent = title.trim().length > 0;
 
   return (
-    <div className="space-y-4">
-      {/* Section label */}
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <ListPlus className="h-4 w-4" />
-        <span className="text-xs font-medium uppercase tracking-wider">New Task</span>
+    <div className="space-y-5">
+      {/* Bold section header */}
+      <div className="flex items-baseline justify-between">
+        <h2 className="font-display text-2xl md:text-3xl tracking-tight text-foreground">
+          New Task
+        </h2>
+        <span className="text-xs font-semibold uppercase tracking-widest text-orange-500/60">
+          01
+        </span>
       </div>
 
       {/* Desktop Layout */}
-      <div className="hidden md:block space-y-3">
+      <div className="hidden md:block space-y-4">
         <input
           ref={inputRef}
           value={title}
@@ -59,11 +63,10 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
           aria-label="New task title"
           disabled={disabled}
           className={cn(
-            "w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200",
-            "placeholder:text-muted-foreground/50",
-            "focus:border-ring focus:ring-2 focus:ring-ring/20",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            "dark:bg-input/20 dark:border-input"
+            "w-full rounded-2xl border-2 bg-background/60 px-5 py-4 text-base outline-none transition-all duration-300",
+            "placeholder:text-muted-foreground/40 placeholder:font-light",
+            "focus:border-orange-400 focus:bg-background focus:shadow-[0_0_0_4px_oklch(0.65_0.20_45/0.1)]",
+            "disabled:cursor-not-allowed disabled:opacity-50"
           )}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -73,17 +76,17 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
           }}
         />
 
-        <div className="flex gap-2 justify-end">
+        <div className="flex gap-3 justify-end">
           <button
             type="button"
             onClick={() => createTask("regular")}
             disabled={disabled || !hasContent}
             className={cn(
-              "px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              "btn-chunky px-6 py-3 text-sm rounded-xl",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               hasContent
-                ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/25 active:scale-[0.97]"
-                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
+                ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20 hover:shadow-emerald-600/30 hover:bg-emerald-700"
+                : "bg-muted/40 text-muted-foreground/30"
             )}
           >
             Normal
@@ -93,20 +96,21 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
             onClick={() => createTask("urgent")}
             disabled={disabled || !hasContent}
             className={cn(
-              "px-5 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+              "btn-chunky px-6 py-3 text-sm rounded-xl",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               hasContent
-                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 active:scale-[0.97]"
-                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
+                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25 hover:shadow-orange-500/35 hover:bg-orange-600"
+                : "bg-muted/40 text-muted-foreground/30"
             )}
           >
+            <Zap className="h-4 w-4" />
             Urgent
           </button>
         </div>
       </div>
 
       {/* Mobile Layout */}
-      <div className="md:hidden space-y-3">
+      <div className="md:hidden space-y-4">
         <textarea
           ref={textareaRef}
           value={title}
@@ -116,25 +120,24 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
           disabled={disabled}
           rows={3}
           className={cn(
-            "w-full rounded-xl border bg-background px-4 py-3 text-base resize-none outline-none transition-all duration-200",
-            "placeholder:text-muted-foreground/50",
-            "focus:border-ring focus:ring-2 focus:ring-ring/20",
-            "disabled:cursor-not-allowed disabled:opacity-50",
-            "dark:bg-input/20 dark:border-input"
+            "w-full rounded-2xl border-2 bg-background/60 px-5 py-4 text-base resize-none outline-none transition-all duration-300",
+            "placeholder:text-muted-foreground/40 placeholder:font-light",
+            "focus:border-orange-400 focus:bg-background focus:shadow-[0_0_0_4px_oklch(0.65_0.20_45/0.1)]",
+            "disabled:cursor-not-allowed disabled:opacity-50"
           )}
         />
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-3">
           <button
             type="button"
             onClick={() => createTask("regular")}
             disabled={disabled || !hasContent}
             className={cn(
-              "py-3 text-sm font-medium rounded-xl transition-all duration-200",
+              "btn-chunky py-4 text-sm rounded-xl",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasContent
-                ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/25 active:scale-[0.97]"
-                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
+                ? "bg-emerald-600 text-white shadow-lg shadow-emerald-600/20"
+                : "bg-muted/40 text-muted-foreground/30"
             )}
           >
             Normal
@@ -144,13 +147,14 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
             onClick={() => createTask("urgent")}
             disabled={disabled || !hasContent}
             className={cn(
-              "py-3 text-sm font-medium rounded-xl transition-all duration-200",
+              "btn-chunky py-4 text-sm rounded-xl",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasContent
-                ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 active:scale-[0.97]"
-                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
+                ? "bg-orange-500 text-white shadow-lg shadow-orange-500/25"
+                : "bg-muted/40 text-muted-foreground/30"
             )}
           >
+            <Zap className="h-4 w-4" />
             Urgent
           </button>
         </div>

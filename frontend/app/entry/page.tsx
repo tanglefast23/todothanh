@@ -53,25 +53,15 @@ export default function EntryPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen page-atmosphere">
       <Header />
 
-      <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
-        <div className="max-w-xl mx-auto space-y-8">
-          {/* Page heading */}
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight heading-display">
-              Entry
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Capture tasks and schedule events quickly.
-            </p>
-          </div>
-
+      <main className="flex-1 px-5 py-4 md:px-10 md:py-8">
+        <div className="max-w-xl mx-auto bold-stagger space-y-6">
           {/* Task creation card */}
           <section
             aria-label="Add a new task"
-            className="rounded-2xl border border-border/50 bg-card p-5 shadow-[var(--shadow-small)] transition-shadow hover:shadow-[var(--shadow-medium)]"
+            className="bold-card p-6 md:p-8"
           >
             <AddTaskForm
               onAddTask={handleAddTask}
@@ -82,7 +72,7 @@ export default function EntryPage() {
           {/* Schedule event card */}
           <section
             aria-label="Schedule an event"
-            className="rounded-2xl border border-border/50 bg-card p-5 shadow-[var(--shadow-small)] transition-shadow hover:shadow-[var(--shadow-medium)]"
+            className="bold-card p-6 md:p-8"
           >
             <ScheduleTaskForm
               onScheduleTask={handleScheduleEvent}

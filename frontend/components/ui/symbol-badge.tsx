@@ -43,8 +43,8 @@ export function SymbolBadge({ symbolKey, assetType, className, size = "md" }: Sy
           "rounded px-1 py-0.5 font-medium",
           size === "sm" ? "text-[8px]" : "text-[9px]",
           isStock
-            ? "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300"
-            : "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300"
+            ? "bg-blue-100 text-blue-700"
+            : "bg-orange-100 text-orange-700"
         )}
       >
         {isStock ? "S" : "C"}
