@@ -11,19 +11,12 @@ import { useOwnerStore } from "@/stores/ownerStore";
 import type { TaskPriority } from "@/types/tasks";
 
 export default function EntryPage() {
-  // Redirect to login if not authenticated
   const { isLoading: isAuthLoading, isAuthenticated } = useAuthGuard();
 
-  // Tasks state
   const addTask = useTasksStore((state) => state.addTask);
-
-  // Scheduled events state
   const addEvent = useScheduledEventsStore((state) => state.addEvent);
-
-  // Owner state
   const getActiveOwnerId = useOwnerStore((state) => state.getActiveOwnerId);
 
-  // Hydration-safe
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
     setIsMounted(true);
@@ -31,20 +24,16 @@ export default function EntryPage() {
 
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
 
-
-  // Handle adding a new task
   const handleAddTask = useCallback((title: string, priority: TaskPriority) => {
     if (!activeOwnerId) return;
     addTask(title, priority, activeOwnerId);
   }, [activeOwnerId, addTask]);
 
-  // Handle scheduling a new event
   const handleScheduleEvent = useCallback((title: string, scheduledAt: string) => {
     if (!activeOwnerId) return;
     addEvent(title, scheduledAt, activeOwnerId);
   }, [activeOwnerId, addEvent]);
 
-  // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -53,7 +42,6 @@ export default function EntryPage() {
     );
   }
 
-  // Show loading while mounting
   if (!isMounted) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -66,20 +54,39 @@ export default function EntryPage() {
     <div className="flex flex-col min-h-screen">
       <Header />
 
-      <main className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <h1 className="text-2xl font-bold">Entry</h1>
+      <main className="flex-1 px-4 py-6 md:px-8 md:py-10">
+        <div className="max-w-xl mx-auto space-y-8">
+          {/* Page heading */}
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight heading-display">
+              Entry
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Capture tasks and schedule events quickly.
+            </p>
+          </div>
 
-          <AddTaskForm
-            onAddTask={handleAddTask}
-            disabled={!isMounted || !activeOwnerId}
-          />
+          {/* Task creation card */}
+          <section
+            aria-label="Add a new task"
+            className="rounded-2xl border border-border/50 bg-card p-5 shadow-[var(--shadow-small)] transition-shadow hover:shadow-[var(--shadow-medium)]"
+          >
+            <AddTaskForm
+              onAddTask={handleAddTask}
+              disabled={!isMounted || !activeOwnerId}
+            />
+          </section>
 
-          {/* Schedule Event Form - All users */}
-          <ScheduleTaskForm
-            onScheduleTask={handleScheduleEvent}
-            disabled={!isMounted || !activeOwnerId}
-          />
+          {/* Schedule event card */}
+          <section
+            aria-label="Schedule an event"
+            className="rounded-2xl border border-border/50 bg-card p-5 shadow-[var(--shadow-small)] transition-shadow hover:shadow-[var(--shadow-medium)]"
+          >
+            <ScheduleTaskForm
+              onScheduleTask={handleScheduleEvent}
+              disabled={!isMounted || !activeOwnerId}
+            />
+          </section>
         </div>
       </main>
     </div>
