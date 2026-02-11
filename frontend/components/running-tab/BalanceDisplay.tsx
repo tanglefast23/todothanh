@@ -28,7 +28,7 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDi
   return (
     <div
       className={cn(
-        "rounded-3xl p-6 bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-white/[0.09]",
+        "rounded-3xl p-6 bg-gradient-to-br from-slate-800 to-slate-950 border border-white/[0.09]",
         canEdit && "cursor-pointer active:scale-[0.99] transition-transform",
         className,
       )}
@@ -36,8 +36,8 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDi
       title={canEdit ? "Double-tap to adjust" : undefined}
     >
       <p
-        className="py-2 font-mono text-[42px] font-extrabold tracking-tight select-none tabular-nums text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-b from-[#6EE7B7] via-[#34D399] to-[#10B981]"
-        style={{ WebkitTextFillColor: "transparent", letterSpacing: "-1px" }}
+        className="py-2 font-mono text-[42px] font-extrabold select-none tabular-nums text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-b from-emerald-300 via-emerald-400 to-emerald-500"
+        style={{ WebkitTextFillColor: "transparent" }}
       >
         {formatVND(amount)}
       </p>

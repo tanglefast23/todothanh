@@ -172,8 +172,9 @@ export default function RunningTabPage() {
   // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <span className="sr-only">Loading...</span>
       </div>
     );
   }
@@ -181,8 +182,9 @@ export default function RunningTabPage() {
   // Show loading state while hydrating
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+        <span className="sr-only">Loading...</span>
       </div>
     );
   }
@@ -234,7 +236,7 @@ export default function RunningTabPage() {
               />
 
               {/* Expense Actions Section */}
-              <section className="space-y-5">
+              <section className="space-y-5" aria-label="Expense actions">
                 {/* Quick Expense Shortcuts */}
                 <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} />
 
@@ -254,9 +256,10 @@ export default function RunningTabPage() {
                   {/* Top-Up Button */}
                   <button
                     onClick={() => setTopUpConfirmOpen(true)}
-                    className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-[#10B981] to-[#059669] transition-all duration-200 active:scale-95"
+                    aria-label="Top up 5 million VND"
+                    className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-emerald-500 to-emerald-600 transition-transform active:scale-95"
                   >
-                    <Plus className="h-5 w-5" />
+                    <Plus className="size-5" />
                     <span className="font-mono font-bold">5M</span>
                   </button>
                 </div>
@@ -349,8 +352,9 @@ export default function RunningTabPage() {
           </DialogHeader>
           <form onSubmit={handleAdjustSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium">New Balance (VND)</label>
+              <label htmlFor="adjust-balance" className="text-sm font-medium">New Balance (VND)</label>
               <Input
+                id="adjust-balance"
                 ref={adjustAmountRef}
                 type="text"
                 inputMode="numeric"
@@ -361,8 +365,9 @@ export default function RunningTabPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Reason</label>
+              <label htmlFor="adjust-reason" className="text-sm font-medium">Reason</label>
               <Input
+                id="adjust-reason"
                 type="text"
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}

@@ -56,6 +56,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="What needs to be done?"
+          aria-label="New task title"
           disabled={disabled}
           className={cn(
             "w-full rounded-xl border bg-background px-4 py-3 text-sm outline-none transition-all duration-200",
@@ -82,7 +83,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
               hasContent
                 ? "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 hover:bg-emerald-500/25 active:scale-[0.97]"
-                : "text-muted-foreground/40 cursor-not-allowed"
+                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
             )}
           >
             Normal
@@ -96,7 +97,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
               hasContent
                 ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25 active:scale-[0.97]"
-                : "text-muted-foreground/40 cursor-not-allowed"
+                : "bg-muted/30 text-muted-foreground/40 cursor-not-allowed"
             )}
           >
             Urgent
@@ -111,6 +112,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="What needs to be done?"
+          aria-label="New task title"
           disabled={disabled}
           rows={3}
           className={cn(

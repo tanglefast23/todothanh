@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import type { ComponentType } from "react";
 import type { ExpenseWithOwner } from "@/types/runningTab";
+import { cn } from "@/lib/utils";
 import { formatVND } from "./BalanceDisplay";
 import { formatRelativeTime } from "@/lib/formatters";
 import { AttachmentUpload } from "./AttachmentUpload";
@@ -99,15 +100,15 @@ export function PendingApproval({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-semibold text-white">Pending Approval</h3>
-          <span className="flex items-center justify-center rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-semibold text-orange-500">
+          <h3 className="text-sm font-semibold text-white text-balance">Pending Approval</h3>
+          <span className="flex items-center justify-center rounded-full bg-orange-500/15 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-orange-500">
             {expenses.length}
           </span>
         </div>
         {canApprove && onApproveAll && expenses.length > 1 && (
           <button
             onClick={onApproveAll}
-            className="text-xs font-medium text-orange-500 transition-colors hover:text-orange-400 active:scale-95"
+            className="text-xs font-medium text-orange-500 active:scale-95 transition-transform"
           >
             Approve all
           </button>
@@ -115,7 +116,7 @@ export function PendingApproval({
       </div>
 
       {/* Expense Cards */}
-      <div className="flex flex-col gap-2.5 stagger-children">
+      <div className="flex flex-col gap-2.5">
         {expenses.map((expense) => (
           <PendingExpenseCard
             key={expense.id}
@@ -151,14 +152,12 @@ function PendingExpenseCard({
   const { Icon, color, bg } = getExpenseLucideIcon(expense.name);
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#1f1f23] bg-[#141417] animate-fade-in-up">
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#1f1f23] bg-[#141417]">
       {/* Content Row */}
       <div className="flex items-center gap-3.5 p-4">
         {/* Icon */}
-        <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${bg}`}
-        >
-          <Icon className={`h-5 w-5 ${color}`} />
+        <div className={cn("flex size-11 shrink-0 items-center justify-center rounded-xl", bg)}>
+          <Icon className={cn("size-5", color)} />
         </div>
 
         {/* Info */}
@@ -168,7 +167,7 @@ function PendingExpenseCard({
             <span className="truncate text-sm font-semibold text-white">
               {expense.name}
             </span>
-            <span className="shrink-0 font-mono text-sm font-medium text-white">
+            <span className="shrink-0 font-mono text-sm font-medium tabular-nums text-white">
               {formatVND(expense.amount)}
             </span>
           </div>
@@ -181,7 +180,7 @@ function PendingExpenseCard({
               </span>
             )}
             {expense.creatorName && (
-              <span className="h-[3px] w-[3px] rounded-full bg-zinc-600" />
+              <span className="size-[3px] rounded-full bg-zinc-600" />
             )}
             <span className="text-[11px] text-zinc-600">
               {formatRelativeTime(expense.createdAt)}
@@ -205,16 +204,16 @@ function PendingExpenseCard({
         <div className="flex gap-2 px-4 pb-3 pt-1">
           <button
             onClick={() => onReject(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-red-500/20 bg-red-500/8 py-2 text-xs font-medium text-red-500 transition-all hover:bg-red-500/15 active:scale-[0.97]"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-red-500/20 bg-red-500/8 py-2 text-xs font-medium text-red-500 transition-transform active:scale-[0.97]"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="size-3.5" />
             Reject
           </button>
           <button
             onClick={() => onApprove(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-emerald-500/20 bg-emerald-500/10 py-2 text-xs font-medium text-emerald-500 transition-all hover:bg-emerald-500/20 active:scale-[0.97]"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-emerald-500/20 bg-emerald-500/10 py-2 text-xs font-medium text-emerald-500 transition-transform active:scale-[0.97]"
           >
-            <Check className="h-3.5 w-3.5" />
+            <Check className="size-3.5" />
             Approve
           </button>
         </div>

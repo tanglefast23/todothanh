@@ -274,9 +274,9 @@ export function AddExpenseModal({
         <button
           type="button"
           onClick={() => openWithTab("simple")}
-          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-[#F43F5E] to-[#E11D48] transition-all duration-200 active:scale-95"
+          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-rose-500 to-rose-600 transition-transform active:scale-95"
         >
-          <Plus className="h-5 w-5" />
+          <Plus className="size-5" />
           <span>Single</span>
         </button>
 
@@ -284,9 +284,9 @@ export function AddExpenseModal({
         <button
           type="button"
           onClick={() => openWithTab("bulk")}
-          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-[#F59E0B] to-[#D97706] transition-all duration-200 active:scale-95"
+          className="flex items-center gap-2 px-5 h-12 rounded-2xl text-sm font-semibold text-white bg-gradient-to-b from-amber-500 to-amber-600 transition-transform active:scale-95"
         >
-          <FileText className="h-5 w-5" />
+          <FileText className="size-5" />
           <span>Bulk</span>
         </button>
       </div>
@@ -320,8 +320,9 @@ export function AddExpenseModal({
           <TabsContent value="simple" className="mt-4">
             <form onSubmit={handleSimpleSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Expense Name</label>
+                <label htmlFor="expense-name" className="text-sm font-medium">Expense Name</label>
                 <Input
+                  id="expense-name"
                   ref={nameInputRef}
                   type="text"
                   value={name}
@@ -332,8 +333,9 @@ export function AddExpenseModal({
                 />
               </div>
               <div>
-                <label className="text-sm font-medium">Amount (VND)</label>
+                <label htmlFor="expense-amount" className="text-sm font-medium">Amount (VND)</label>
                 <Input
+                  id="expense-amount"
                   ref={amountInputRef}
                   type="text"
                   inputMode="numeric"
@@ -363,11 +365,12 @@ export function AddExpenseModal({
           <TabsContent value="bulk" className="mt-4">
             <form onSubmit={handleBulkSubmit} className="space-y-4">
               <div>
-                <label className="text-sm font-medium">Bulk Entry</label>
+                <label htmlFor="bulk-entry" className="text-sm font-medium">Bulk Entry</label>
                 <p className="text-xs text-muted-foreground mb-2">
                   Format: name amount, name amount, ...
                 </p>
                 <textarea
+                  id="bulk-entry"
                   ref={bulkTextareaRef}
                   value={bulkText}
                   onChange={(e) => setBulkText(e.target.value)}
