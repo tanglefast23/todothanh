@@ -1,78 +1,17 @@
 "use client";
 
 import {
-  ShoppingCart,
-  Fuel,
-  Coffee,
-  UtensilsCrossed,
-  Car,
-  Stethoscope,
-  Scissors,
-  CupSoda,
-  CircleParking,
-  Wine,
-  Martini,
   Check,
   X,
-  Receipt,
   ImagePlus,
   CircleCheck,
   CircleX,
 } from "lucide-react";
-import type { ComponentType } from "react";
 import type { ExpenseWithOwner } from "@/types/runningTab";
 import { cn } from "@/lib/utils";
 import { formatRelativeTime } from "@/lib/formatters";
+import { getExpenseIcon } from "@/lib/expenseIcons";
 import { AttachmentUpload } from "./AttachmentUpload";
-
-// --- Icon mapping (Pencil design uses Lucide icons in colored containers) ---
-
-interface ExpenseLucideIcon {
-  Icon: ComponentType<{ className?: string }>;
-  color: string;
-  bg: string;
-}
-
-function getExpenseLucideIcon(name: string): ExpenseLucideIcon {
-  const n = name.toLowerCase();
-
-  if (n.includes("groceries") || n.includes("grocery")) {
-    return { Icon: ShoppingCart, color: "text-emerald-600", bg: "bg-emerald-500/15" };
-  }
-  if (n.includes("gas") || n.includes("fuel") || n.includes("petrol")) {
-    return { Icon: Fuel, color: "text-orange-600", bg: "bg-orange-500/15" };
-  }
-  if (n.includes("coffee") || n.includes("café") || n.includes("cafe")) {
-    return { Icon: Coffee, color: "text-cyan-600", bg: "bg-cyan-500/15" };
-  }
-  if (n.includes("bubble tea") || n.includes("boba")) {
-    return { Icon: CupSoda, color: "text-purple-600", bg: "bg-purple-500/15" };
-  }
-  if (n.includes("food") || n.includes("lunch") || n.includes("dinner") || n.includes("breakfast")) {
-    return { Icon: UtensilsCrossed, color: "text-amber-600", bg: "bg-amber-500/15" };
-  }
-  if (n.includes("parking") || n.includes("park")) {
-    return { Icon: CircleParking, color: "text-blue-600", bg: "bg-blue-500/15" };
-  }
-  if (n.includes("kia") || n.includes("car")) {
-    return { Icon: Car, color: "text-slate-600", bg: "bg-slate-500/15" };
-  }
-  if (n.includes("vet")) {
-    return { Icon: Stethoscope, color: "text-pink-600", bg: "bg-pink-500/15" };
-  }
-  if (n.includes("grooming") || n.includes("groom")) {
-    return { Icon: Scissors, color: "text-violet-600", bg: "bg-violet-500/15" };
-  }
-  if (n.includes("many drinks")) {
-    return { Icon: Martini, color: "text-rose-600", bg: "bg-rose-500/15" };
-  }
-  if (n.includes("drinks") || n.includes("cocktail") || n.includes("alcohol")) {
-    return { Icon: Wine, color: "text-rose-600", bg: "bg-rose-500/15" };
-  }
-
-  // Default fallback
-  return { Icon: Receipt, color: "text-zinc-600", bg: "bg-zinc-500/15" };
-}
 
 // --- Types ---
 
@@ -172,7 +111,7 @@ function PendingExpenseCard({
   onReject,
   onAttachment,
 }: PendingExpenseCardProps) {
-  const { Icon, color, bg } = getExpenseLucideIcon(expense.name);
+  const { Icon, color, bg } = getExpenseIcon(expense.name);
 
   return (
     <div className="flex flex-col gap-3 rounded-[18px] bg-[#F6F7F8] p-4">

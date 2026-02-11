@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatVND } from "./BalanceDisplay";
 import { formatRelativeTime } from "@/lib/formatters";
+import { getExpenseIcon, getExpenseCatImage } from "@/lib/expenseIcons";
 import type { Expense, ExpenseStatus } from "@/types/runningTab";
 import { AttachmentUpload } from "./AttachmentUpload";
 
@@ -34,99 +35,33 @@ const NUMBER_COLORS = [
   "from-fuchsia-500 to-pink-500",
 ];
 
-// Icon can be either an emoji string or cat image info
-type ExpenseIcon =
-  | { type: "emoji"; value: string }
-  | { type: "cat"; cat: "ivory" | "tom" | "both" }
-  | null;
+/** Renders the expense icon — either a cat photo or a Lucide icon in a colored container. */
+function ExpenseIconDisplay({ name }: { name: string }) {
+  const catImage = getExpenseCatImage(name);
 
-// Get icon/emoji for expense based on name
-function getExpenseIcon(name: string): ExpenseIcon {
-  const lowerName = name.toLowerCase();
-
-  // Cat-related expenses - use actual cat photos
-  if (lowerName.includes("tom and ivory") || lowerName.includes("both")) {
-    return { type: "cat", cat: "both" };
-  }
-  if (lowerName.includes("ivory")) {
-    return { type: "cat", cat: "ivory" };
-  }
-  if (lowerName.includes("tom")) {
-    return { type: "cat", cat: "tom" };
-  }
-
-  // Kia Top Up - white minivan
-  if (lowerName.includes("kia")) {
-    return { type: "emoji", value: "🚐" };
-  }
-
-  // Quick shortcut expenses
-  if (lowerName.includes("groceries") || lowerName.includes("grocery")) {
-    return { type: "emoji", value: "🛒" };
-  }
-  if (lowerName.includes("gas") || lowerName.includes("fuel") || lowerName.includes("petrol")) {
-    return { type: "emoji", value: "⛽" };
-  }
-  if (lowerName.includes("bubble tea") || lowerName.includes("boba")) {
-    return { type: "emoji", value: "🧋" };
-  }
-  if (lowerName.includes("coffee") || lowerName.includes("café") || lowerName.includes("cafe")) {
-    return { type: "emoji", value: "☕" };
-  }
-  if (lowerName.includes("many drinks")) {
-    return { type: "emoji", value: "🍹🍸🍺" };
-  }
-  if (lowerName.includes("drinks") || lowerName.includes("cocktail") || lowerName.includes("alcohol")) {
-    return { type: "emoji", value: "🍹" };
-  }
-  if (lowerName.includes("food") || lowerName.includes("lunch") || lowerName.includes("dinner") || lowerName.includes("breakfast")) {
-    return { type: "emoji", value: "🍜" };
-  }
-  if (lowerName.includes("parking") || lowerName.includes("park")) {
-    return { type: "emoji", value: "🅿️" };
-  }
-
-  // Vet (from cat expenses)
-  if (lowerName.includes("vet")) {
-    return { type: "emoji", value: "💉" };
-  }
-  // Grooming (from cat expenses)
-  if (lowerName.includes("grooming") || lowerName.includes("groom")) {
-    return { type: "emoji", value: "✂️" };
-  }
-
-  return null;
-}
-
-// Component to render expense icon (emoji or cat image)
-function ExpenseIconDisplay({ icon }: { icon: ExpenseIcon }) {
-  if (!icon) return null;
-
-  if (icon.type === "emoji") {
+  if (catImage === "both") {
     return (
-      <span className="text-lg" role="img" aria-label="expense icon">
-        {icon.value}
-      </span>
+      <div className="flex -space-x-1">
+        <img src="/ivory.PNG" alt="Ivory" className="w-6 h-7 rounded object-contain" />
+        <img src="/tom.png" alt="Tom" className="w-6 h-7 rounded object-contain" />
+      </div>
     );
   }
 
-  if (icon.type === "cat") {
-    if (icon.cat === "both") {
-      return (
-        <div className="flex -space-x-1">
-          <img src="/ivory.PNG" alt="Ivory" className="w-6 h-7 rounded object-contain" />
-          <img src="/tom.png" alt="Tom" className="w-6 h-7 rounded object-contain" />
-        </div>
-      );
-    }
-    const imgSrc = icon.cat === "ivory" ? "/ivory.PNG" : "/tom.png";
-    const altText = icon.cat === "ivory" ? "Ivory" : "Tom";
+  if (catImage) {
+    const imgSrc = catImage === "ivory" ? "/ivory.PNG" : "/tom.png";
+    const altText = catImage === "ivory" ? "Ivory" : "Tom";
     return (
       <img src={imgSrc} alt={altText} className="w-7 h-8 rounded object-contain" />
     );
   }
 
-  return null;
+  const { Icon, color, bg } = getExpenseIcon(name);
+  return (
+    <div className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", bg)}>
+      <Icon className={cn("size-[18px]", color)} />
+    </div>
+  );
 }
 
 const statusConfig: Record<
@@ -165,7 +100,6 @@ export function ExpenseItem({
   const config = statusConfig[expense.status];
   const isPending = expense.status === "pending";
   const numberColor = itemNumber ? NUMBER_COLORS[(itemNumber - 1) % NUMBER_COLORS.length] : NUMBER_COLORS[0];
-  const expenseIcon = getExpenseIcon(expense.name);
 
   // Check if attachment is a PDF
   const isPdf = expense.attachmentUrl?.toLowerCase().includes(".pdf");
@@ -196,7 +130,7 @@ export function ExpenseItem({
       {/* Main Content */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 flex-wrap">
-          <ExpenseIconDisplay icon={expenseIcon} />
+          <ExpenseIconDisplay name={expense.name} />
           <h4 className="font-semibold text-sm truncate tracking-tight">{expense.name}</h4>
           {/* Only show status badge for non-pending expenses */}
           {expense.status !== "pending" && (
