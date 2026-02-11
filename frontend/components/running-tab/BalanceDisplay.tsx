@@ -33,7 +33,7 @@ function formatCompact(value: number): string {
 
 export function BalanceDisplay({ amount, className, canEdit, onEdit }: BalanceDisplayProps) {
   const isPositive = amount >= 0;
-  const isHealthy = amount >= 1000000; // 1M VND threshold for "healthy"
+  const isHealthy = amount >= 2000000; // 2M VND threshold for "healthy"
 
   const handleDoubleClick = () => {
     if (canEdit && onEdit) {
