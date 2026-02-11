@@ -46,8 +46,65 @@ const MONTH_NAMES = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-/** Number of history entries to show per page in the UI */
-const HISTORY_DISPLAY_PAGE_SIZE = 50;
+// ---------------------------------------------------------------------------
+// Monthly grouping helper
+// ---------------------------------------------------------------------------
+
+interface MonthGroup {
+  key: string;
+  label: string;
+  entries: TabHistoryEntry[];
+  stats: {
+    totalAdded: number;
+    totalApproved: number;
+    totalRejected: number;
+  };
+}
+
+function groupEntriesByMonth(entries: TabHistoryEntry[]): MonthGroup[] {
+  const buckets = new Map<string, { entries: TabHistoryEntry[]; totalAdded: number; totalApproved: number; totalRejected: number }>();
+
+  for (const entry of entries) {
+    if (!entry.createdAt) continue;
+    const date = new Date(entry.createdAt);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+    let bucket = buckets.get(key);
+    if (!bucket) {
+      bucket = { entries: [], totalAdded: 0, totalApproved: 0, totalRejected: 0 };
+      buckets.set(key, bucket);
+    }
+
+    bucket.entries.push(entry);
+
+    if (entry.type === "add") {
+      bucket.totalAdded += entry.amount;
+    } else if (entry.type === "expense_approved") {
+      bucket.totalApproved += Math.abs(entry.amount);
+    } else if (entry.type === "expense_rejected") {
+      bucket.totalRejected += Math.abs(entry.amount);
+    }
+  }
+
+  return Array.from(buckets.entries())
+    .sort(([a], [b]) => b.localeCompare(a))
+    .map(([key, bucket]) => {
+      const [yearStr, monthStr] = key.split("-");
+      return {
+        key,
+        label: format(
+          new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1),
+          "MMMM yyyy",
+        ),
+        entries: bucket.entries,
+        stats: {
+          totalAdded: bucket.totalAdded,
+          totalApproved: bucket.totalApproved,
+          totalRejected: bucket.totalRejected,
+        },
+      };
+    });
+}
 
 export function TabHistory({ history, owners }: TabHistoryProps) {
   return (
@@ -59,7 +116,7 @@ export function TabHistory({ history, owners }: TabHistoryProps) {
 }
 
 // ---------------------------------------------------------------------------
-// Section 1: Balance History (existing behavior, unchanged)
+// Section 1: Balance History (grouped by month)
 // ---------------------------------------------------------------------------
 
 function BalanceHistorySection({
@@ -69,18 +126,30 @@ function BalanceHistorySection({
   history: TabHistoryEntry[];
   owners: { id: string; name: string }[];
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [displayCount, setDisplayCount] = useState(HISTORY_DISPLAY_PAGE_SIZE);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => {
+    const now = new Date();
+    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    return new Set([currentKey]);
+  });
 
-  const enrichedHistory = useMemo(() => {
-    const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
-    return history.slice(0, displayCount).map((entry) => ({
-      ...entry,
-      creatorName: entry.createdBy ? ownerMap.get(entry.createdBy) : undefined,
-    }));
-  }, [history, owners, displayCount]);
+  const monthGroups = useMemo(() => groupEntriesByMonth(history), [history]);
 
-  const hasMore = history.length > displayCount;
+  const ownerMap = useMemo(
+    () => new Map(owners.map((o) => [o.id, o.name])),
+    [owners],
+  );
+
+  const toggleMonth = useCallback((key: string) => {
+    setExpandedMonths((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  }, []);
 
   if (history.length === 0) {
     return null;
@@ -89,60 +158,99 @@ function BalanceHistorySection({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <History className="h-5 w-5 text-muted-foreground" />
-            <CardTitle className="text-base">Balance History</CardTitle>
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              setIsExpanded(!isExpanded);
-              if (isExpanded) setDisplayCount(HISTORY_DISPLAY_PAGE_SIZE);
-            }}
-            className="h-8"
-          >
-            {isExpanded ? (
-              <>
-                <ChevronDown className="h-4 w-4 mr-1" />
-                Hide
-              </>
-            ) : (
-              <>
-                <ChevronRight className="h-4 w-4 mr-1" />
-                Show ({history.length})
-              </>
-            )}
-          </Button>
+        <div className="flex items-center gap-2">
+          <History className="h-5 w-5 text-muted-foreground" />
+          <CardTitle className="text-base">Balance History</CardTitle>
         </div>
         <CardDescription>
           Audit log of all balance changes (last 6 months)
         </CardDescription>
       </CardHeader>
 
-      {isExpanded && (
-        <CardContent>
-          <div className="space-y-3">
-            {enrichedHistory.map((entry) => (
+      <CardContent className="space-y-2">
+        {monthGroups.map((group) => (
+          <BalanceMonthGroup
+            key={group.key}
+            group={group}
+            isOpen={expandedMonths.has(group.key)}
+            ownerMap={ownerMap}
+            onToggle={toggleMonth}
+          />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Balance month collapsible group
+// ---------------------------------------------------------------------------
+
+function BalanceMonthGroup({
+  group,
+  isOpen,
+  ownerMap,
+  onToggle,
+}: {
+  group: MonthGroup;
+  isOpen: boolean;
+  ownerMap: Map<string, string>;
+  onToggle: (key: string) => void;
+}) {
+  const enrichedEntries = useMemo(
+    () =>
+      group.entries.map((entry) => ({
+        ...entry,
+        creatorName: entry.createdBy ? ownerMap.get(entry.createdBy) : undefined,
+      })),
+    [group.entries, ownerMap],
+  );
+
+  const contentId = `balance-month-${group.key}`;
+
+  return (
+    <div className="border rounded-md">
+      <button
+        type="button"
+        onClick={() => onToggle(group.key)}
+        className="flex flex-col gap-1 w-full px-3 py-2 text-left hover:bg-muted/50 transition-colors"
+        aria-expanded={isOpen}
+        aria-controls={contentId}
+      >
+        <div className="flex items-center gap-2 text-sm font-medium">
+          {isOpen ? (
+            <ChevronDown className="h-4 w-4 shrink-0" />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          )}
+          {group.label}
+          <span className="text-xs text-muted-foreground font-normal">
+            ({group.entries.length} {group.entries.length === 1 ? "entry" : "entries"})
+          </span>
+        </div>
+        <div className="flex items-center gap-3 ml-6 text-xs flex-wrap">
+          <span className="text-green-500">
+            Added: {formatVND(group.stats.totalAdded)}
+          </span>
+          <span className="text-red-500">
+            Approved: {formatVND(group.stats.totalApproved)}
+          </span>
+          <span className="text-muted-foreground">
+            Rejected: {formatVND(group.stats.totalRejected)}
+          </span>
+        </div>
+      </button>
+
+      {isOpen && (
+        <div id={contentId} className="px-3 pb-3 border-t">
+          <div className="space-y-3 pt-2">
+            {enrichedEntries.map((entry) => (
               <HistoryItem key={entry.id} entry={entry} />
             ))}
-            {hasMore && (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setDisplayCount((c) => c + HISTORY_DISPLAY_PAGE_SIZE)}
-                  className="text-muted-foreground"
-                >
-                  Load more ({history.length - displayCount} remaining)
-                </Button>
-              </div>
-            )}
           </div>
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -155,9 +263,13 @@ function SearchHistorySection({
 }: {
   owners: { id: string; name: string }[];
 }) {
-  const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1));
-  const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
+  const [currentMonth] = useState(() => {
+    const now = new Date();
+    return { month: now.getMonth() + 1, year: now.getFullYear() };
+  });
+  const [isSectionExpanded, setIsSectionExpanded] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(String(currentMonth.month));
+  const [selectedYear, setSelectedYear] = useState(String(currentMonth.year));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
@@ -167,10 +279,10 @@ function SearchHistorySection({
   const removeSearchedMonth = useRunningTabStore((s) => s.removeSearchedMonth);
 
   // Build year options: current year back to 5 years ago
-  const yearOptions = useMemo(() => {
-    const currentYear = now.getFullYear();
-    return Array.from({ length: 6 }, (_, i) => String(currentYear - i));
-  }, [now]);
+  const yearOptions = useMemo(
+    () => Array.from({ length: 6 }, (_, i) => String(currentMonth.year - i)),
+    [currentMonth.year],
+  );
 
   const handleSearch = useCallback(async () => {
     const year = parseInt(selectedYear, 10);
@@ -201,7 +313,7 @@ function SearchHistorySection({
         return next;
       });
     },
-    [removeSearchedMonth]
+    [removeSearchedMonth],
   );
 
   const toggleMonth = useCallback((key: string) => {
@@ -219,105 +331,120 @@ function SearchHistorySection({
   // Sort searched months descending (newest first)
   const sortedMonthKeys = useMemo(
     () => Object.keys(searchedHistory).sort((a, b) => b.localeCompare(a)),
-    [searchedHistory]
+    [searchedHistory],
   );
 
   const ownerMap = useMemo(
     () => new Map(owners.map((o) => [o.id, o.name])),
-    [owners]
+    [owners],
   );
 
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <Search className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-base">Search History</CardTitle>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsSectionExpanded(!isSectionExpanded)}
+          className="flex items-center justify-between w-full text-left"
+          aria-expanded={isSectionExpanded}
+          aria-controls="search-history-content"
+        >
+          <div className="flex items-center gap-2">
+            <Search className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-base">Search History</CardTitle>
+          </div>
+          {isSectionExpanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
         <CardDescription>
           Load any past month from the cloud on demand
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Month/Year picker + Search button */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-            <SelectTrigger size="sm" className="w-[130px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MONTH_NAMES.map((name, i) => (
-                <SelectItem key={i + 1} value={String(i + 1)}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      {isSectionExpanded && (
+        <CardContent id="search-history-content" className="space-y-4">
+          {/* Month/Year picker + Search button */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+              <SelectTrigger size="sm" className="w-[130px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {MONTH_NAMES.map((name, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>
+                    {name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger size="sm" className="w-[90px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {yearOptions.map((year) => (
-                <SelectItem key={year} value={year}>
-                  {year}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger size="sm" className="w-[90px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {yearOptions.map((year) => (
+                  <SelectItem key={year} value={year}>
+                    {year}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Button
-            size="sm"
-            onClick={handleSearch}
-            disabled={isLoading}
-            className="h-8"
-          >
-            {isLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <>
-                <Search className="h-4 w-4 mr-1" />
-                Search
-              </>
-            )}
-          </Button>
-        </div>
-
-        {/* Error message */}
-        {error && (
-          <p className="text-sm text-destructive">{error}</p>
-        )}
-
-        {/* Searched month groups */}
-        {sortedMonthKeys.length > 0 && (
-          <div className="space-y-2">
-            {sortedMonthKeys.map((key) => {
-              const entries = searchedHistory[key];
-              const isOpen = expandedMonths.has(key);
-              const [yearStr, monthStr] = key.split("-");
-              const label = format(
-                new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1),
-                "MMMM yyyy"
-              );
-
-              return (
-                <SearchedMonthGroup
-                  key={key}
-                  monthKey={key}
-                  label={label}
-                  entries={entries}
-                  isOpen={isOpen}
-                  ownerMap={ownerMap}
-                  onToggle={toggleMonth}
-                  onRemove={handleRemoveMonth}
-                />
-              );
-            })}
+            <Button
+              size="sm"
+              onClick={handleSearch}
+              disabled={isLoading}
+              className="h-8"
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <>
+                  <Search className="h-4 w-4 mr-1" />
+                  Search
+                </>
+              )}
+            </Button>
           </div>
-        )}
-      </CardContent>
+
+          {/* Error message */}
+          {error && (
+            <p className="text-sm text-destructive">{error}</p>
+          )}
+
+          {/* Searched month groups */}
+          {sortedMonthKeys.length > 0 && (
+            <div className="space-y-2">
+              {sortedMonthKeys.map((key) => {
+                const entries = searchedHistory[key];
+                const isOpen = expandedMonths.has(key);
+                const [yearStr, monthStr] = key.split("-");
+                const label = format(
+                  new Date(parseInt(yearStr, 10), parseInt(monthStr, 10) - 1),
+                  "MMMM yyyy",
+                );
+
+                return (
+                  <SearchedMonthGroup
+                    key={key}
+                    monthKey={key}
+                    label={label}
+                    entries={entries}
+                    isOpen={isOpen}
+                    ownerMap={ownerMap}
+                    onToggle={toggleMonth}
+                    onRemove={handleRemoveMonth}
+                  />
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   );
 }
