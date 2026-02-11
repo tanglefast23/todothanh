@@ -26,6 +26,8 @@ export function AddExpenseModal({
   prefilledName,
   onClearPrefilled,
 }: AddExpenseModalProps) {
+  type FocusTarget = "name" | "amount" | "bulk";
+
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("simple");
 
@@ -33,6 +35,7 @@ export function AddExpenseModal({
   const nameInputRef = useRef<HTMLInputElement>(null);
   const amountInputRef = useRef<HTMLInputElement>(null);
   const bulkTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const preferredFocusRef = useRef<FocusTarget>("name");
 
   // Simple form state
   const [name, setName] = useState("");
@@ -50,18 +53,45 @@ export function AddExpenseModal({
     setActiveTab("simple");
   };
 
+  const focusField = (target: FocusTarget) => {
+    const element =
+      target === "name"
+        ? nameInputRef.current
+        : target === "amount"
+          ? amountInputRef.current
+          : bulkTextareaRef.current;
+
+    if (!element) return;
+
+    element.focus({ preventScroll: true });
+
+    if (target === "amount" && element instanceof HTMLInputElement) {
+      const cursor = element.value.length;
+      element.setSelectionRange(cursor, cursor);
+    }
+  };
+
+  const queueFocusField = (target: FocusTarget) => {
+    preferredFocusRef.current = target;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => focusField(target));
+    });
+  };
+
   // Handle prefilled name from shortcuts
   useEffect(() => {
     if (prefilledName) {
       setName(prefilledName);
       setActiveTab("simple");
-      setOpen(true);
-      // Focus amount field since name is already filled
-      setTimeout(() => {
-        amountInputRef.current?.focus();
-      }, 100);
+      preferredFocusRef.current = "amount";
+
+      if (!open) {
+        setOpen(true);
+      } else {
+        queueFocusField("amount");
+      }
     }
-  }, [prefilledName]);
+  }, [open, prefilledName]);
 
   const handleSimpleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,19 +159,12 @@ export function AddExpenseModal({
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (isOpen) {
-      // Small delay to ensure dialog is rendered
-      setTimeout(() => {
-        if (activeTab === "simple") {
-          // If name is prefilled, focus amount; otherwise focus name
-          if (name.trim()) {
-            amountInputRef.current?.focus();
-          } else {
-            nameInputRef.current?.focus();
-          }
-        } else {
-          bulkTextareaRef.current?.focus();
-        }
-      }, 50);
+      preferredFocusRef.current =
+        activeTab === "bulk"
+          ? "bulk"
+          : name.trim()
+            ? "amount"
+            : "name";
     } else {
       // Clear prefilled name when modal closes
       if (onClearPrefilled) {
@@ -154,13 +177,11 @@ export function AddExpenseModal({
   // Handle tab change - focus appropriate input
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    setTimeout(() => {
-      if (tab === "simple") {
-        nameInputRef.current?.focus();
-      } else {
-        bulkTextareaRef.current?.focus();
-      }
-    }, 50);
+    if (tab === "simple") {
+      queueFocusField(name.trim() ? "amount" : "name");
+    } else {
+      queueFocusField("bulk");
+    }
   };
 
   // Handle Enter key on bulk textarea - submit form
@@ -179,14 +200,8 @@ export function AddExpenseModal({
   // Open modal with a specific tab
   const openWithTab = (tab: string) => {
     setActiveTab(tab);
+    preferredFocusRef.current = tab === "simple" ? "name" : "bulk";
     setOpen(true);
-    setTimeout(() => {
-      if (tab === "simple") {
-        nameInputRef.current?.focus();
-      } else {
-        bulkTextareaRef.current?.focus();
-      }
-    }, 50);
   };
 
   return (
@@ -225,7 +240,13 @@ export function AddExpenseModal({
           <span className="relative text-white">Bulk</span>
         </button>
       </div>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          queueFocusField(preferredFocusRef.current);
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Add Expense</DialogTitle>
           <DialogDescription>
@@ -258,8 +279,10 @@ export function AddExpenseModal({
                 <label className="text-sm font-medium">Amount (VND)</label>
                 <Input
                   ref={amountInputRef}
-                  type="text"
+                  type="tel"
                   inputMode="numeric"
+                  pattern="[0-9]*"
+                  enterKeyHint="done"
                   value={amount}
                   onChange={handleAmountChange}
                   onKeyDown={handleAmountKeyDown}
