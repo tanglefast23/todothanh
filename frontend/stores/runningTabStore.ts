@@ -98,8 +98,9 @@ export const useRunningTabStore = create<RunningTabState>()(
         })),
       removeSearchedMonth: (key) =>
         set((state) => {
-          const { [key]: _, ...rest } = state.searchedHistory;
-          return { searchedHistory: rest };
+          const next = { ...state.searchedHistory };
+          delete next[key];
+          return { searchedHistory: next };
         }),
       clearAllSearchedHistory: () => set({ searchedHistory: {} }),
 
