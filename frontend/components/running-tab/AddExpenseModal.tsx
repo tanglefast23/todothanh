@@ -335,9 +335,8 @@ export function AddExpenseModal({
                 <label className="text-sm font-medium">Amount (VND)</label>
                 <Input
                   ref={amountInputRef}
-                  type="tel"
+                  type="text"
                   inputMode="numeric"
-                  pattern="[0-9]*"
                   enterKeyHint="done"
                   value={amount}
                   onChange={handleAmountChange}
