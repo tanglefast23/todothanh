@@ -15,6 +15,7 @@ import {
   Scissors,
   Package,
   ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -322,7 +323,7 @@ function LargeShortcutTile({
 }: {
   label: string;
   sublabel?: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: LucideIcon;
   catImage?: "ivory" | "tom" | "both";
   onClick: () => void;
   color: keyof typeof tileColors;
@@ -389,7 +390,7 @@ function ShortcutTile({
   hasSubmenu,
 }: {
   label: string;
-  icon?: React.ComponentType<{ className?: string }>;
+  icon?: LucideIcon;
   catImage?: "ivory" | "tom" | "both";
   onClick: () => void;
   color: keyof typeof tileColors;
