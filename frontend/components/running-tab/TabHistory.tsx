@@ -126,11 +126,8 @@ function BalanceHistorySection({
   history: TabHistoryEntry[];
   owners: { id: string; name: string }[];
 }) {
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => {
-    const now = new Date();
-    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    return new Set([currentKey]);
-  });
+  const [isSectionExpanded, setIsSectionExpanded] = useState(false);
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
   const monthGroups = useMemo(() => groupEntriesByMonth(history), [history]);
 
@@ -158,26 +155,41 @@ function BalanceHistorySection({
   return (
     <Card>
       <CardHeader className="pb-3">
-        <div className="flex items-center gap-2">
-          <History className="h-5 w-5 text-muted-foreground" />
-          <CardTitle className="text-base">Balance History</CardTitle>
-        </div>
+        <button
+          type="button"
+          onClick={() => setIsSectionExpanded(!isSectionExpanded)}
+          className="flex items-center justify-between w-full text-left"
+          aria-expanded={isSectionExpanded}
+          aria-controls="balance-history-content"
+        >
+          <div className="flex items-center gap-2">
+            <History className="h-5 w-5 text-muted-foreground" />
+            <CardTitle className="text-base">Balance History</CardTitle>
+          </div>
+          {isSectionExpanded ? (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-muted-foreground" />
+          )}
+        </button>
         <CardDescription>
           Audit log of all balance changes (last 6 months)
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-2">
-        {monthGroups.map((group) => (
-          <BalanceMonthGroup
-            key={group.key}
-            group={group}
-            isOpen={expandedMonths.has(group.key)}
-            ownerMap={ownerMap}
-            onToggle={toggleMonth}
-          />
-        ))}
-      </CardContent>
+      {isSectionExpanded && (
+        <CardContent id="balance-history-content" className="space-y-2">
+          {monthGroups.map((group) => (
+            <BalanceMonthGroup
+              key={group.key}
+              group={group}
+              isOpen={expandedMonths.has(group.key)}
+              ownerMap={ownerMap}
+              onToggle={toggleMonth}
+            />
+          ))}
+        </CardContent>
+      )}
     </Card>
   );
 }
