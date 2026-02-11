@@ -36,6 +36,8 @@ export function AddExpenseModal({
   const amountInputRef = useRef<HTMLInputElement>(null);
   const bulkTextareaRef = useRef<HTMLTextAreaElement>(null);
   const preferredFocusRef = useRef<FocusTarget>("name");
+  const tabLockRef = useRef<string | null>(null);
+  const tabLockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Simple form state
   const [name, setName] = useState("");
@@ -90,9 +92,21 @@ export function AddExpenseModal({
     });
   };
 
+  const lockTabSelection = (tab: string) => {
+    tabLockRef.current = tab;
+    if (tabLockTimerRef.current) {
+      clearTimeout(tabLockTimerRef.current);
+    }
+    tabLockTimerRef.current = setTimeout(() => {
+      tabLockRef.current = null;
+      tabLockTimerRef.current = null;
+    }, 350);
+  };
+
   // Handle prefilled name from shortcuts
   useEffect(() => {
     if (prefilledName) {
+      lockTabSelection("simple");
       setName(prefilledName);
       setActiveTab("simple");
       preferredFocusRef.current = "amount";
@@ -104,6 +118,14 @@ export function AddExpenseModal({
       }
     }
   }, [open, prefilledName]);
+
+  useEffect(() => {
+    return () => {
+      if (tabLockTimerRef.current) {
+        clearTimeout(tabLockTimerRef.current);
+      }
+    };
+  }, []);
 
   const handleSimpleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -171,6 +193,11 @@ export function AddExpenseModal({
   const handleOpenChange = (isOpen: boolean) => {
     setOpen(isOpen);
     if (!isOpen) {
+      tabLockRef.current = null;
+      if (tabLockTimerRef.current) {
+        clearTimeout(tabLockTimerRef.current);
+        tabLockTimerRef.current = null;
+      }
       // Clear prefilled name when modal closes
       if (onClearPrefilled) {
         onClearPrefilled();
@@ -181,6 +208,9 @@ export function AddExpenseModal({
 
   // Handle tab change - focus appropriate input
   const handleTabChange = (tab: string) => {
+    if (tabLockRef.current && tab !== tabLockRef.current) {
+      return;
+    }
     setActiveTab(tab);
     if (tab === "simple") {
       queueFocusField("name");
@@ -204,6 +234,7 @@ export function AddExpenseModal({
 
   // Open modal with a specific tab
   const openWithTab = (tab: string) => {
+    lockTabSelection(tab);
     setActiveTab(tab);
     preferredFocusRef.current = tab === "simple" ? "name" : "bulk";
     if (open) {
