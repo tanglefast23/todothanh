@@ -214,12 +214,39 @@ export function ExpenseItem({
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Attachment button - only for pending expenses */}
+        {/* Attachment button or thumbnail - only for pending expenses */}
         {isPending && !expense.attachmentUrl && (
           <AttachmentUpload
             expenseId={expense.id}
             onUpload={(url) => onAttachment(expense.id, url)}
           />
+        )}
+        {isPending && expense.attachmentUrl && (
+          <a
+            href={expense.attachmentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group relative block"
+            title="View attachment"
+          >
+            {isPdf || imageError ? (
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-400/50 hover:border-pink-400 transition-all">
+                <FileText className="h-4 w-4 text-pink-500" />
+              </div>
+            ) : (
+              <div className="relative h-9 w-9 overflow-hidden rounded-lg border border-pink-400/50 hover:border-pink-400 transition-all">
+                <img
+                  src={expense.attachmentUrl}
+                  alt="Attachment"
+                  className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+                  onError={() => setImageError(true)}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <ExternalLink className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                </div>
+              </div>
+            )}
+          </a>
         )}
 
         {/* Approve/Reject buttons - only for pending and authorized users */}
