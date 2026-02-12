@@ -57,7 +57,7 @@ export default function EntryPage() {
       <Header />
 
       <main className="flex-1 px-6 py-5 md:px-10 md:py-8">
-        <div className="max-w-xl mx-auto space-y-7">
+        <div className="max-w-xl mx-auto space-y-7 bold-stagger">
           {/* Task creation card */}
           <section
             aria-label="Add a new task"

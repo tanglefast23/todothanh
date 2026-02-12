@@ -385,16 +385,31 @@
     animation: bold-enter 0.6s var(--ease-out-expo) both;
   }
 
-  /* Staggered bold entrance for children */
+  /* Staggered pop entrance for page sections */
   .bold-stagger > * {
     opacity: 0;
-    animation: bold-enter 0.5s var(--ease-out-expo) both;
+    animation: pop-in 0.5s var(--ease-out-expo) both;
   }
   .bold-stagger > *:nth-child(1) { animation-delay: 0ms; }
-  .bold-stagger > *:nth-child(2) { animation-delay: 80ms; }
-  .bold-stagger > *:nth-child(3) { animation-delay: 160ms; }
-  .bold-stagger > *:nth-child(4) { animation-delay: 240ms; }
-  .bold-stagger > *:nth-child(5) { animation-delay: 320ms; }
+  .bold-stagger > *:nth-child(2) { animation-delay: 100ms; }
+  .bold-stagger > *:nth-child(3) { animation-delay: 180ms; }
+  .bold-stagger > *:nth-child(4) { animation-delay: 250ms; }
+  .bold-stagger > *:nth-child(5) { animation-delay: 310ms; }
+
+  /* Staggered pop entrance for list items (tasks, events) */
+  .stagger-list > * {
+    opacity: 0;
+    animation: pop-in 0.4s var(--ease-out-expo) both;
+  }
+  .stagger-list > *:nth-child(1) { animation-delay: 40ms; }
+  .stagger-list > *:nth-child(2) { animation-delay: 100ms; }
+  .stagger-list > *:nth-child(3) { animation-delay: 160ms; }
+  .stagger-list > *:nth-child(4) { animation-delay: 220ms; }
+  .stagger-list > *:nth-child(5) { animation-delay: 280ms; }
+  .stagger-list > *:nth-child(6) { animation-delay: 330ms; }
+  .stagger-list > *:nth-child(7) { animation-delay: 370ms; }
+  .stagger-list > *:nth-child(8) { animation-delay: 400ms; }
+  .stagger-list > *:nth-child(n+9) { animation-delay: 420ms; }
 
   /* Bold card with strong presence */
   .bold-card {
@@ -459,6 +474,22 @@
   0% {
     opacity: 0;
     transform: translateY(20px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Playful pop-in: slides up with a slight overshoot for a lively feel */
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.94);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-3px) scale(1.01);
   }
   100% {
     opacity: 1;

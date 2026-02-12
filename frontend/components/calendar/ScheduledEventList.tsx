@@ -15,7 +15,6 @@ import {
 interface ScheduledEventListProps {
   events: ScheduledEvent[];
   getOwnerName: (ownerId: string | null) => string | undefined;
-  isOwnerMaster: (ownerId: string | null) => boolean;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onDelete: (id: string) => void;
@@ -61,7 +60,6 @@ function groupEventsByDay(events: ScheduledEvent[], dateField: "scheduledAt" | "
 export function ScheduledEventList({
   events,
   getOwnerName,
-  isOwnerMaster,
   onComplete,
   onUncomplete,
   onDelete,
@@ -110,13 +108,13 @@ export function ScheduledEventList({
               <h3 className="font-display text-[26px] leading-tight text-[#1A1A1A]">
                 {dayGroup.displayDate}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-3 stagger-list">
                 {dayGroup.events.map((event) => (
                   <ScheduledEventItem
                     key={event.id}
                     event={event}
                     creatorName={getOwnerName(event.createdBy)}
-                    isCreatorMaster={isOwnerMaster(event.createdBy)}
+
                     completerName={getOwnerName(event.completedBy)}
                     onComplete={onComplete}
                     onUncomplete={onUncomplete}
@@ -144,13 +142,13 @@ export function ScheduledEventList({
               <h3 className="font-display text-[22px] leading-tight text-[#1A1A1A]/70">
                 {dayGroup.displayDate}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-3 stagger-list">
                 {dayGroup.events.map((event) => (
                   <ScheduledEventItem
                     key={event.id}
                     event={event}
                     creatorName={getOwnerName(event.createdBy)}
-                    isCreatorMaster={isOwnerMaster(event.createdBy)}
+
                     completerName={getOwnerName(event.completedBy)}
                     onComplete={onComplete}
                     onUncomplete={onUncomplete}

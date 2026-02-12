@@ -34,7 +34,8 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
               href={item.href}
               onClick={() => handleNavClick(item.href)}
               className={cn(
-                "flex flex-col items-center justify-center flex-1 h-full gap-1 transition-colors",
+                "flex flex-col items-center justify-center flex-1 h-full gap-1",
+                "transition-all duration-150 active:scale-90",
                 isActive
                   ? "text-orange-500"
                   : "text-muted-foreground hover:text-foreground"
@@ -44,12 +45,12 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
             >
               <item.icon
                 className={cn(
-                  "h-6 w-6 transition-all",
+                  "h-6 w-6 transition-transform duration-200",
                   isActive && "scale-110"
                 )}
               />
               <span className={cn(
-                "text-xs font-medium",
+                "text-xs font-medium transition-colors duration-150",
                 isActive && "text-orange-500"
               )}>
                 {item.title}
