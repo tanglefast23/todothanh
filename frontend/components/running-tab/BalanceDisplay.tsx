@@ -37,10 +37,10 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit, children }:
     <div
       className={cn(
         "rounded-3xl py-7 px-6 flex flex-col gap-2",
-        "bg-gradient-to-br from-[#FF6B6B] via-[#FF8E53] to-[#FEB47B]",
         canEdit && "cursor-pointer active:scale-[0.99] transition-transform",
         className,
       )}
+      style={{ background: "linear-gradient(to bottom right, #FF6B6B, #FF8E53, #FEB47B)" }}
       onDoubleClick={handleDoubleClick}
       title={canEdit ? "Double-tap to adjust" : undefined}
     >
