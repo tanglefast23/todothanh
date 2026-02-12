@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import {
   Check,
   X,
-  ImagePlus,
+  FileText,
+  ExternalLink,
   CircleCheck,
   CircleX,
 } from "lucide-react";
@@ -111,7 +113,9 @@ function PendingExpenseCard({
   onReject,
   onAttachment,
 }: PendingExpenseCardProps) {
+  const [imageError, setImageError] = useState(false);
   const { Icon, color, bg } = getExpenseIcon(expense.name);
+  const isPdf = expense.attachmentUrl?.toLowerCase().includes(".pdf");
 
   return (
     <div className="flex flex-col gap-3 rounded-[18px] bg-[#F6F7F8] p-4">
@@ -153,9 +157,25 @@ function PendingExpenseCard({
             href={expense.attachmentUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex size-[38px] shrink-0 items-center justify-center rounded-xl bg-[#FDF2F8] transition-colors hover:bg-[#FCE7F3]"
+            className="group relative shrink-0 block"
           >
-            <ImagePlus className="size-[18px] text-pink-500" />
+            {isPdf || imageError ? (
+              <div className="flex size-[38px] items-center justify-center rounded-xl bg-[#FDF2F8] transition-colors hover:bg-[#FCE7F3]">
+                <FileText className="size-[18px] text-pink-500" />
+              </div>
+            ) : (
+              <div className="relative size-[38px] overflow-hidden rounded-xl border border-pink-400/50 hover:border-pink-400 transition-all">
+                <img
+                  src={expense.attachmentUrl}
+                  alt="Attachment"
+                  className="size-full object-cover group-hover:scale-105 transition-transform"
+                  onError={() => setImageError(true)}
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+                  <ExternalLink className="size-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+                </div>
+              </div>
+            )}
           </a>
         )}
 
