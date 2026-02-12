@@ -137,19 +137,21 @@ export async function performInitialLoad(): Promise<void> {
   const localScheduledEvents = useScheduledEventsStore.getState().events;
 
   // Sync Tasks
-  // Tasks now sync each CRUD action directly to Supabase, so cloud is the source
-  // of truth even when the cloud list is empty. This prevents stale local tasks
-  // from being re-pushed after a legitimate delete of the last task.
-  if (Array.isArray(cloudTasks)) {
+  // Never replace local tasks with an empty cloud list. If cloud tasks are empty,
+  // keep local data and rely on per-action writes (add/complete/delete) to sync.
+  if (Array.isArray(cloudTasks) && cloudTasks.length > 0) {
     useTasksStore.getState().setTasks(cloudTasks);
-  } else if (Array.isArray(localTasks) && localTasks.length > 0) {
+  } else if (!Array.isArray(cloudTasks) && Array.isArray(localTasks) && localTasks.length > 0) {
     // Fallback only if cloud fetch returned undefined (unexpected).
+    // Keep local data and attempt a one-time recovery push.
     console.log("[Sync] Recovery: pushing local tasks to cloud");
     try {
       await upsertTasks(localTasks);
     } catch (error) {
       console.error("[Sync] Failed to push local tasks to cloud:", error);
     }
+  } else if (Array.isArray(cloudTasks) && cloudTasks.length === 0 && localTasks.length > 0) {
+    console.warn("[Sync] Cloud tasks are empty; preserving local tasks.");
   }
 
   // Sync Tags
