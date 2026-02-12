@@ -16,9 +16,6 @@ export default function TasksPage() {
   const completeTask = useTasksStore((state) => state.completeTask);
   const uncompleteTask = useTasksStore((state) => state.uncompleteTask);
   const deleteTask = useTasksStore((state) => state.deleteTask);
-  const setTaskAttachment = useTasksStore((state) => state.setTaskAttachment);
-  const clearTaskAttachment = useTasksStore((state) => state.clearTaskAttachment);
-
   // Owner state
   const owners = useOwnerStore((state) => state.owners);
   const getActiveOwnerId = useOwnerStore((state) => state.getActiveOwnerId);
@@ -59,16 +56,6 @@ export default function TasksPage() {
     deleteTask(id);
   }, [deleteTask, isMaster, tasks]);
 
-  // Handle adding attachment to a task
-  const handleAttachment = useCallback((taskId: string, url: string) => {
-    setTaskAttachment(taskId, url);
-  }, [setTaskAttachment]);
-
-  // Handle clearing attachment from a task
-  const handleClearAttachment = useCallback((taskId: string) => {
-    clearTaskAttachment(taskId);
-  }, [clearTaskAttachment]);
-
   // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
@@ -83,7 +70,7 @@ export default function TasksPage() {
       <Header />
 
       <main className="flex-1 p-6">
-        <div className="max-w-3xl mx-auto space-y-6">
+        <div className="max-w-3xl mx-auto space-y-6 bold-stagger">
           <div>
             <h1 className="font-display text-3xl md:text-4xl tracking-tight">Tasks</h1>
             <p className="text-sm text-[#9CA3AF] mt-0.5">Stay on top of things</p>
@@ -96,11 +83,8 @@ export default function TasksPage() {
             onComplete={handleComplete}
             onUncomplete={handleUncomplete}
             onDelete={handleDelete}
-            onAttachment={handleAttachment}
-            onClearAttachment={handleClearAttachment}
             canComplete={true}
             canDelete={isMaster}
-            isMaster={isMaster}
           />
         </div>
       </main>

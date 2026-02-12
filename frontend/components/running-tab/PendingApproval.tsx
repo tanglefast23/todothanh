@@ -139,42 +139,47 @@ function PendingExpenseCard({
         </span>
       </div>
 
-      {/* Action row: Attach + Reject + Approve */}
-      {canApprove && (
-        <div className="flex items-center gap-2.5">
-          {/* Attachment button */}
-          {!expense.attachmentUrl ? (
-            <div className="shrink-0">
-              <AttachmentUpload
-                expenseId={expense.id}
-                onUpload={(url) => onAttachment(expense.id, url)}
-              />
-            </div>
-          ) : (
-            <div className="flex size-[38px] shrink-0 items-center justify-center rounded-xl bg-[#FDF2F8]">
-              <ImagePlus className="size-[18px] text-pink-500" />
-            </div>
-          )}
-
-          {/* Reject */}
-          <button
-            onClick={() => onReject(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-500 transition-transform active:scale-[0.97]"
+      {/* Attachment button — available to all users */}
+      <div className="flex items-center gap-2.5">
+        {!expense.attachmentUrl ? (
+          <div className="shrink-0">
+            <AttachmentUpload
+              expenseId={expense.id}
+              onUpload={(url) => onAttachment(expense.id, url)}
+            />
+          </div>
+        ) : (
+          <a
+            href={expense.attachmentUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex size-[38px] shrink-0 items-center justify-center rounded-xl bg-[#FDF2F8] transition-colors hover:bg-[#FCE7F3]"
           >
-            <X className="size-3.5" />
-            Reject
-          </button>
+            <ImagePlus className="size-[18px] text-pink-500" />
+          </a>
+        )}
 
-          {/* Approve */}
-          <button
-            onClick={() => onApprove(expense.id)}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#F0FDF4] h-[38px] text-[13px] font-semibold text-emerald-500 transition-transform active:scale-[0.97]"
-          >
-            <Check className="size-3.5" />
-            Approve
-          </button>
-        </div>
-      )}
+        {/* Reject + Approve — only for approvers */}
+        {canApprove && (
+          <>
+            <button
+              onClick={() => onReject(expense.id)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-500 transition-transform active:scale-[0.97]"
+            >
+              <X className="size-3.5" />
+              Reject
+            </button>
+
+            <button
+              onClick={() => onApprove(expense.id)}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#F0FDF4] h-[38px] text-[13px] font-semibold text-emerald-500 transition-transform active:scale-[0.97]"
+            >
+              <Check className="size-3.5" />
+              Approve
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

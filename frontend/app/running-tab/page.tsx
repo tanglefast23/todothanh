@@ -258,7 +258,7 @@ export default function RunningTabPage() {
       <Header />
 
       <main className="flex-1 px-4 py-5 sm:px-6">
-        <div className="max-w-3xl mx-auto flex flex-col gap-7">
+        <div className="max-w-3xl mx-auto flex flex-col gap-7 bold-stagger">
           {/* Show Initialize Form if not initialized (master only) */}
           {!isTabInitialized && isMaster && (
             <InitializeBalanceForm onInitialize={handleInitialize} />

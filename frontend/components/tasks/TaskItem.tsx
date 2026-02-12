@@ -5,7 +5,6 @@ import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { CreatorAvatar } from "./CreatorAvatar";
-import { TaskAttachmentUpload } from "./TaskAttachmentUpload";
 import { cn } from "@/lib/utils";
 import type { Task } from "@/types/tasks";
 import { formatDistanceToNow } from "date-fns";
@@ -17,11 +16,8 @@ interface TaskItemProps {
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onDelete: (id: string) => void;
-  onAttachment?: (taskId: string, url: string) => void;
-  onClearAttachment?: (taskId: string) => void;
   canComplete: boolean;
   canDelete?: boolean;
-  isMaster?: boolean;
 }
 
 export function TaskItem({
@@ -31,11 +27,8 @@ export function TaskItem({
   onComplete,
   onUncomplete,
   onDelete,
-  onAttachment,
-  onClearAttachment,
   canComplete,
   canDelete = false,
-  isMaster = false,
 }: TaskItemProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isCompleted = task.status === "completed";
@@ -110,72 +103,7 @@ export function TaskItem({
         </button>
       )}
 
-      {/* Top row: Creator info and attachment */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          {creatorName && (
-            <div className="flex items-center gap-1">
-              <CreatorAvatar name={creatorName} size="sm" />
-              <span>{formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</span>
-            </div>
-          )}
-
-          {isCompleted && completerName && task.completedAt && (
-            <div className="flex items-center gap-1 ml-2">
-              <span>&#8226;</span>
-              <CreatorAvatar name={completerName} size="sm" />
-              <span>Completed {formatDistanceToNow(new Date(task.completedAt), { addSuffix: true })}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Attachment Section */}
-        {!showDeleteConfirm && (
-          <div className="flex items-center gap-2">
-            {/* Show thumbnail if attachment exists */}
-            {task.attachmentUrl && (
-              <div className="relative group">
-                <a
-                  href={task.attachmentUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="block"
-                >
-                  <img
-                    src={task.attachmentUrl}
-                    alt="Task attachment"
-                    className="h-10 w-10 rounded-lg object-cover border border-border/50 hover:border-pink-400 transition-colors"
-                  />
-                </a>
-                {/* Delete X for master users */}
-                {isMaster && onClearAttachment && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClearAttachment(task.id);
-                    }}
-                    className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Remove attachment"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </div>
-            )}
-
-            {/* Show upload button for master users if no attachment */}
-            {isMaster && !task.attachmentUrl && onAttachment && (
-              <TaskAttachmentUpload
-                taskId={task.id}
-                onUpload={(url) => onAttachment(task.id, url)}
-              />
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Main content row: Checkbox and task description */}
+      {/* Main row: Checkbox + task title + attachment */}
       <div className="flex items-start gap-3">
         <Checkbox
           checked={isCompleted}
@@ -203,6 +131,25 @@ export function TaskItem({
             )}
           </div>
         </div>
+
+      </div>
+
+      {/* Creator info row (below task title) */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground pl-8">
+        {creatorName && (
+          <div className="flex items-center gap-1">
+            <CreatorAvatar name={creatorName} size="sm" />
+            <span>Created {formatDistanceToNow(new Date(task.createdAt), { addSuffix: true })}</span>
+          </div>
+        )}
+
+        {isCompleted && completerName && task.completedAt && (
+          <div className="flex items-center gap-1 ml-2">
+            <span>&#8226;</span>
+            <CreatorAvatar name={completerName} size="sm" />
+            <span>Completed {formatDistanceToNow(new Date(task.completedAt), { addSuffix: true })}</span>
+          </div>
+        )}
       </div>
 
       {showDeleteConfirm && canDelete && (

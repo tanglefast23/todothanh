@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useRef } from "react";
 import type { Expense, ExpenseWithOwner } from "@/types/runningTab";
-import { ExpenseItem } from "./ExpenseItem";
 import { PendingApproval } from "./PendingApproval";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,29 +70,17 @@ export function ExpenseList({
     }
   };
   // Group expenses by status
-  const { pending, approved, rejected } = useMemo(() => {
+  const pending = useMemo(() => {
     const ownerMap = new Map(owners.map((o) => [o.id, o.name]));
 
-    const enrichExpense = (e: Expense): ExpenseWithOwner => ({
-      ...e,
-      creatorName: e.createdBy ? ownerMap.get(e.createdBy) : undefined,
-      approverName: e.approvedBy ? ownerMap.get(e.approvedBy) : undefined,
-    });
-
-    return {
-      pending: expenses
-        .filter((e) => e.status === "pending")
-        .map(enrichExpense)
-        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
-      approved: expenses
-        .filter((e) => e.status === "approved")
-        .map(enrichExpense)
-        .sort((a, b) => new Date(b.approvedAt || b.createdAt).getTime() - new Date(a.approvedAt || a.createdAt).getTime()),
-      rejected: expenses
-        .filter((e) => e.status === "rejected")
-        .map(enrichExpense)
-        .sort((a, b) => new Date(b.approvedAt || b.createdAt).getTime() - new Date(a.approvedAt || a.createdAt).getTime()),
-    };
+    return expenses
+      .filter((e) => e.status === "pending")
+      .map((e): ExpenseWithOwner => ({
+        ...e,
+        creatorName: e.createdBy ? ownerMap.get(e.createdBy) : undefined,
+        approverName: e.approvedBy ? ownerMap.get(e.approvedBy) : undefined,
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [expenses, owners]);
 
   if (expenses.length === 0) {
@@ -222,42 +209,5 @@ export function ExpenseList({
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-interface ExpenseSectionProps {
-  expenses: ExpenseWithOwner[];
-  canApprove: boolean;
-  onApprove: (id: string) => void;
-  onReject: (id: string) => void;
-  onAttachment: (id: string, url: string) => void;
-}
-
-function ExpenseSection({
-  expenses,
-  canApprove,
-  onApprove,
-  onReject,
-  onAttachment,
-}: ExpenseSectionProps) {
-  const count = expenses.length;
-
-  return (
-    <div className="space-y-3">
-      {expenses.map((expense, index) => (
-        <ExpenseItem
-          key={expense.id}
-          expense={expense}
-          creatorName={expense.creatorName}
-          approverName={expense.approverName}
-          canApprove={canApprove}
-          onApprove={onApprove}
-          onReject={onReject}
-          onAttachment={onAttachment}
-          itemNumber={index + 1}
-          showNumber={count > 1}
-        />
-      ))}
-    </div>
   );
 }

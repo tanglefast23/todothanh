@@ -539,6 +539,13 @@ export const useRunningTabStore = create<RunningTabState>()(
         // Only allow deletion of pending or rejected expenses
         if (!expense || expense.status === "approved") return;
 
+        // Clean up attachment from Supabase Storage
+        if (expense.attachmentUrl) {
+          deleteAttachments([expense.attachmentUrl]).catch((error) => {
+            console.error("[Store] Failed to delete attachment from Storage:", error);
+          });
+        }
+
         set((state) => ({
           expenses: state.expenses.filter((e) => e.id !== id),
         }));

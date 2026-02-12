@@ -10,11 +10,8 @@ interface TaskListProps {
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
   onDelete: (id: string) => void;
-  onAttachment?: (taskId: string, url: string) => void;
-  onClearAttachment?: (taskId: string) => void;
   canComplete: boolean;
   canDelete?: boolean;
-  isMaster?: boolean;
 }
 
 export function TaskList({
@@ -23,11 +20,8 @@ export function TaskList({
   onComplete,
   onUncomplete,
   onDelete,
-  onAttachment,
-  onClearAttachment,
   canComplete,
   canDelete = false,
-  isMaster = false,
 }: TaskListProps) {
   // Separate tasks by status and priority
   const { normalTasks, urgentTasks, completedTasks } = useMemo(() => {
@@ -75,7 +69,7 @@ export function TaskList({
       {hasPendingTasks && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {/* Urgent Tasks Column */}
-          <div className="rounded-[20px] bg-gradient-to-b from-[#FFF7ED] to-[#FFF1F2] p-4 space-y-3">
+          <div className="rounded-[20px] bg-gradient-to-b from-[#FDDCB5] to-[#FECFB0] p-4 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-bold text-[#F97316]">Urgent</span>
               <span className="flex items-center justify-center px-2.5 py-0.5 rounded-[10px] bg-[#F97316] text-white text-[11px] font-bold">
@@ -83,7 +77,7 @@ export function TaskList({
               </span>
             </div>
             {urgentTasks.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 stagger-list">
                 {urgentTasks.map((task) => (
                   <TaskItem
                     key={task.id}
@@ -93,11 +87,8 @@ export function TaskList({
                     onComplete={onComplete}
                     onUncomplete={onUncomplete}
                     onDelete={onDelete}
-                    onAttachment={onAttachment}
-                    onClearAttachment={onClearAttachment}
                     canComplete={canComplete}
                     canDelete={canDelete}
-                    isMaster={isMaster}
                   />
                 ))}
               </div>
@@ -115,7 +106,7 @@ export function TaskList({
               </span>
             </div>
             {normalTasks.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 stagger-list">
                 {normalTasks.map((task) => (
                   <TaskItem
                     key={task.id}
@@ -125,11 +116,8 @@ export function TaskList({
                     onComplete={onComplete}
                     onUncomplete={onUncomplete}
                     onDelete={onDelete}
-                    onAttachment={onAttachment}
-                    onClearAttachment={onClearAttachment}
                     canComplete={canComplete}
                     canDelete={canDelete}
-                    isMaster={isMaster}
                   />
                 ))}
               </div>
@@ -154,7 +142,7 @@ export function TaskList({
               {completedTasks.length}
             </span>
           </div>
-          <div className="space-y-3">
+          <div className="space-y-3 stagger-list">
             {completedTasks.map((task) => (
               <TaskItem
                 key={task.id}
@@ -164,11 +152,8 @@ export function TaskList({
                 onComplete={onComplete}
                 onUncomplete={onUncomplete}
                 onDelete={onDelete}
-                onAttachment={onAttachment}
-                onClearAttachment={onClearAttachment}
                 canComplete={canComplete}
                 canDelete={canDelete}
-                isMaster={isMaster}
               />
             ))}
           </div>

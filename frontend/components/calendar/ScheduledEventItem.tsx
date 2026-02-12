@@ -11,7 +11,6 @@ import { format, formatDistanceToNow, isPast, isToday } from "date-fns";
 interface ScheduledEventItemProps {
   event: ScheduledEvent;
   creatorName?: string;
-  isCreatorMaster?: boolean;
   completerName?: string;
   onComplete: (id: string) => void;
   onUncomplete: (id: string) => void;
@@ -23,7 +22,6 @@ interface ScheduledEventItemProps {
 export function ScheduledEventItem({
   event,
   creatorName,
-  isCreatorMaster = true,
   completerName,
   onComplete,
   onUncomplete,
