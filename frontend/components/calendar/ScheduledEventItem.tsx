@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, Clock } from "lucide-react";
+import { X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreatorAvatar } from "@/components/tasks/CreatorAvatar";
 import { cn } from "@/lib/utils";
@@ -120,21 +120,32 @@ export function ScheduledEventItem({
         </button>
       )}
 
-      {/* Top row: Creator info and scheduled time */}
+      {/* Top row: Time (prominent) + Creator info (subtle, right-aligned) */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <div
+            className="flex items-center gap-1.5"
+            style={{ color: isCompleted ? "#9CA3AF" : getAccentColor() }}
+          >
+            <span className="text-xl font-bold tracking-tight">{format(scheduledDate, "h:mm a")}</span>
+          </div>
+          {isOverdue && !isCompleted && (
+            <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-[#EF4444] text-white">Overdue</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 text-[11px] text-muted-foreground/70">
           {creatorName && (
             <div className="flex items-center gap-1">
               <CreatorAvatar name={creatorName} size="sm" />
-              <span>Created {formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}</span>
+              <span>{formatDistanceToNow(new Date(event.createdAt), { addSuffix: true })}</span>
             </div>
           )}
-
           {isCompleted && completerName && event.completedAt && (
-            <div className="flex items-center gap-1 ml-2">
+            <div className="flex items-center gap-1 ml-1">
               <span>&#8226;</span>
               <CreatorAvatar name={completerName} size="sm" />
-              <span>Completed {formatDistanceToNow(new Date(event.completedAt), { addSuffix: true })}</span>
+              <span>{formatDistanceToNow(new Date(event.completedAt), { addSuffix: true })}</span>
             </div>
           )}
         </div>
@@ -160,20 +171,6 @@ export function ScheduledEventItem({
             </span>
           </div>
         </div>
-      </div>
-
-      {/* Scheduled time row */}
-      <div className="flex items-center gap-4 text-[13px] pl-8">
-        <div
-          className="flex items-center gap-1.5"
-          style={{ color: isCompleted ? "#9CA3AF" : getAccentColor() }}
-        >
-          <Clock className="h-3.5 w-3.5" />
-          <span className="font-semibold">{format(scheduledDate, "h:mm a")}</span>
-        </div>
-        {isOverdue && !isCompleted && (
-          <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-[#EF4444] text-white">Overdue</span>
-        )}
       </div>
 
       {showDeleteConfirm && (

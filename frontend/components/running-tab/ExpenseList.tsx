@@ -1,14 +1,11 @@
 "use client";
 
 import { useMemo, useState, useRef } from "react";
-import { ChevronDown } from "lucide-react";
 import type { Expense, ExpenseWithOwner } from "@/types/runningTab";
 import { ExpenseItem } from "./ExpenseItem";
 import { PendingApproval } from "./PendingApproval";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import {
   Dialog,
   DialogContent,
@@ -39,10 +36,6 @@ export function ExpenseList({
   onRejectAll,
   onAttachment,
 }: ExpenseListProps) {
-  // Collapsible section state - Approved and Rejected collapsed by default
-  const [approvedExpanded, setApprovedExpanded] = useState(false);
-  const [rejectedExpanded, setRejectedExpanded] = useState(false);
-
   // Rejection reason dialog state (single expense)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectExpenseId, setRejectExpenseId] = useState<string | null>(null);
@@ -135,75 +128,6 @@ export function ExpenseList({
           />
         )}
 
-        {/* Approved Section - Collapsible */}
-        {approved.length > 0 && (
-          <Card className="border-2 border-emerald-400/40 bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-green-500/10 shadow-lg shadow-emerald-500/5 overflow-hidden">
-            <CardHeader
-              className="pb-3 cursor-pointer select-none border-b border-emerald-400/10 hover:bg-emerald-500/5 transition-colors"
-              onClick={() => setApprovedExpanded(!approvedExpanded)}
-            >
-              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-emerald-600 to-green-600 flex items-center justify-between font-bold tracking-tight">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span>Approved</span>
-                  <span className="text-sm font-normal text-emerald-500/70">({approved.length})</span>
-                </div>
-                <ChevronDown
-                  className={cn(
-                    "h-5 w-5 text-emerald-500 transition-transform duration-300",
-                    approvedExpanded && "rotate-180"
-                  )}
-                />
-              </CardTitle>
-            </CardHeader>
-            {approvedExpanded && (
-              <CardContent className="pt-4 animate-fade-in-up">
-                <ExpenseSection
-                  expenses={approved}
-                  canApprove={canApprove}
-                  onApprove={onApprove}
-                  onReject={handleRejectClick}
-                  onAttachment={onAttachment}
-                />
-              </CardContent>
-            )}
-          </Card>
-        )}
-
-        {/* Rejected Section - Collapsible */}
-        {rejected.length > 0 && (
-          <Card className="border-2 border-red-400/40 bg-gradient-to-br from-red-500/10 via-red-500/5 to-rose-500/10 shadow-lg shadow-red-500/5 overflow-hidden">
-            <CardHeader
-              className="pb-3 cursor-pointer select-none border-b border-red-400/10 hover:bg-red-500/5 transition-colors"
-              onClick={() => setRejectedExpanded(!rejectedExpanded)}
-            >
-              <CardTitle className="text-lg text-transparent bg-clip-text [-webkit-background-clip:text] bg-gradient-to-r from-red-600 to-rose-600 flex items-center justify-between font-bold tracking-tight">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500" />
-                  <span>Rejected</span>
-                  <span className="text-sm font-normal text-red-500/70">({rejected.length})</span>
-                </div>
-                <ChevronDown
-                  className={cn(
-                    "h-5 w-5 text-red-500 transition-transform duration-300",
-                    rejectedExpanded && "rotate-180"
-                  )}
-                />
-              </CardTitle>
-            </CardHeader>
-            {rejectedExpanded && (
-              <CardContent className="pt-4 animate-fade-in-up">
-                <ExpenseSection
-                  expenses={rejected}
-                  canApprove={canApprove}
-                  onApprove={onApprove}
-                  onReject={handleRejectClick}
-                  onAttachment={onAttachment}
-                />
-              </CardContent>
-            )}
-          </Card>
-        )}
       </div>
 
       {/* Rejection Reason Dialog */}

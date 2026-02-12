@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Trash2, Plus, Check, X } from "lucide-react";
+import { Trash2, Plus, Check, X, ChevronDown } from "lucide-react";
+import { getExpenseIcon } from "@/lib/expenseIcons";
 import { Header } from "@/components/layout/Header";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useOwnerStore } from "@/stores/ownerStore";
@@ -125,10 +126,8 @@ export default function RunningTabPage() {
     return owners.map((o) => ({ id: o.id, name: o.name }));
   }, [owners]);
 
-  // Recent activity: 3 most recent history entries
-  const recentActivity = useMemo(() => {
-    return history.slice(0, 3);
-  }, [history]);
+  // Recent activity state
+  const [activityExpanded, setActivityExpanded] = useState(false);
 
   // Monthly summary: aggregate current month stats
   const monthlySummary = useMemo(() => {
@@ -350,8 +349,12 @@ export default function RunningTabPage() {
               />
 
               {/* Recent Activity */}
-              {recentActivity.length > 0 && (
-                <RecentActivitySection entries={recentActivity} />
+              {history.length > 0 && (
+                <RecentActivitySection
+                  entries={history}
+                  expanded={activityExpanded}
+                  onToggle={() => setActivityExpanded(!activityExpanded)}
+                />
               )}
 
               {/* Monthly Summary */}
@@ -485,26 +488,44 @@ export default function RunningTabPage() {
   );
 }
 
+/** Strip emoji characters from history descriptions (legacy data). */
+function stripEmojis(text: string): string {
+  return text.replace(/[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu, "").replace(/\s{2,}/g, " ").trim();
+}
+
+function ExpenseCategoryIcon({ description }: { description: string }) {
+  const { Icon, color } = getExpenseIcon(description);
+  return <Icon className={`size-4 shrink-0 ${color}`} />;
+}
+
 // --- Recent Activity Section ---
 
 function RecentActivitySection({
   entries,
+  expanded,
+  onToggle,
 }: {
   entries: TabHistoryEntry[];
+  expanded: boolean;
+  onToggle: () => void;
 }) {
+  const PREVIEW_COUNT = 4;
+  const hasMore = entries.length > PREVIEW_COUNT;
+  const visibleEntries = expanded ? entries : entries.slice(0, PREVIEW_COUNT);
 
   return (
     <section className="flex flex-col gap-3.5">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold tracking-tight text-foreground">Recent Activity</h3>
-        <span className="text-[13px] font-semibold text-[#FF6B6B]">See all</span>
       </div>
 
       <div className="rounded-[20px] bg-[#F6F7F8] overflow-hidden">
-        {entries.map((entry, index) => {
+        {visibleEntries.map((entry, index) => {
           const isPositive = entry.amount > 0;
           const isNeutral = entry.amount === 0;
-          const label = entry.description || historyTypeLabel[entry.type];
+          const isExpenseEntry = entry.type === "expense_approved" || entry.type === "expense_rejected";
+          const rawLabel = entry.description || historyTypeLabel[entry.type];
+          const label = isExpenseEntry ? stripEmojis(rawLabel) : rawLabel;
 
           return (
             <div key={entry.id}>
@@ -514,7 +535,10 @@ function RecentActivitySection({
               <div className="flex items-center gap-3 px-4 py-3.5">
                 <HistoryIcon type={entry.type} />
                 <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-                  <span className="text-sm font-semibold text-[#1A1A1A] truncate">
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-[#1A1A1A] truncate">
+                    {isExpenseEntry && (
+                      <ExpenseCategoryIcon description={label} />
+                    )}
                     {label}
                   </span>
                   <span className="text-xs text-[#9CA3AF]">
@@ -530,6 +554,22 @@ function RecentActivitySection({
             </div>
           );
         })}
+
+        {/* Expand / Collapse toggle */}
+        {hasMore && (
+          <>
+            <div className="mx-4 h-px bg-[#E5E7EB]" />
+            <button
+              onClick={onToggle}
+              className="flex w-full items-center justify-center gap-1.5 py-3 text-[13px] font-semibold text-[#9CA3AF] transition-colors hover:text-[#6B7280]"
+            >
+              {expanded ? "Show less" : `Show all (${entries.length})`}
+              <ChevronDown
+                className={`size-4 transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
+              />
+            </button>
+          </>
+        )}
       </div>
     </section>
   );
