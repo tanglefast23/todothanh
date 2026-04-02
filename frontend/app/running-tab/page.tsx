@@ -27,6 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { formatRelativeTime } from "@/lib/formatters";
+import { haptic } from "@/lib/audio";
 import type { TabHistoryEntry, TabHistoryType } from "@/types/runningTab";
 
 // History type config for Recent Activity icons
@@ -293,7 +294,7 @@ export default function RunningTabPage() {
               >
                 {/* Top-Up Button */}
                 <button
-                  onClick={() => setTopUpConfirmOpen(true)}
+                  onClick={() => { haptic(); setTopUpConfirmOpen(true); }}
                   aria-label="Top up 5 million VND"
                   className="flex items-center justify-center gap-2 px-[18px] h-10 rounded-[20px] bg-[#B6F2CF] text-[#15803D] text-[13px] font-bold transition-transform active:scale-95"
                 >
@@ -303,7 +304,7 @@ export default function RunningTabPage() {
 
                 {/* Custom Top-Up Button */}
                 <button
-                  onClick={() => setCustomTopUpOpen(true)}
+                  onClick={() => { haptic(); setCustomTopUpOpen(true); }}
                   aria-label="Custom top up amount"
                   className="flex items-center justify-center gap-1 px-3 h-10 rounded-[20px] bg-[#D4F5E2] text-[#15803D] text-[12px] font-bold transition-transform active:scale-95"
                 >
@@ -314,7 +315,7 @@ export default function RunningTabPage() {
                 {/* Single expense button */}
                 <button
                   type="button"
-                  onClick={() => addExpenseRef.current?.openWithTab("simple")}
+                  onClick={() => { haptic(); addExpenseRef.current?.openWithTab("simple"); }}
                   className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-2xl font-black leading-none">+</span>
@@ -324,7 +325,7 @@ export default function RunningTabPage() {
                 {/* Bulk expense button */}
                 <button
                   type="button"
-                  onClick={() => addExpenseRef.current?.openWithTab("bulk")}
+                  onClick={() => { haptic(); addExpenseRef.current?.openWithTab("bulk"); }}
                   className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-2xl font-black leading-none">+</span>

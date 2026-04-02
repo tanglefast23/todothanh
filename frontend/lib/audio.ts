@@ -2,6 +2,20 @@
 
 // Centralized audio utility for consistent sound effects throughout the app
 
+/**
+ * Trigger a short haptic vibration on supported devices.
+ * Falls back silently on unsupported browsers (desktop, older iOS Safari).
+ */
+export function haptic(ms = 10): void {
+  try {
+    if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+      navigator.vibrate(ms);
+    }
+  } catch {
+    // Vibration not available
+  }
+}
+
 // Get or create a shared AudioContext
 let sharedAudioContext: AudioContext | null = null;
 

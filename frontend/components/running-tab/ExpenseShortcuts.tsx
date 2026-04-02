@@ -18,6 +18,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { haptic } from "@/lib/audio";
 
 interface ExpenseShortcutsProps {
   onSelectExpense: (name: string, tab?: "simple" | "bulk") => void;
@@ -299,7 +300,7 @@ function FullScreenOverlay({
       {/* Header */}
       <div className="flex items-center gap-3 p-4 border-b border-border/50">
         <button
-          onClick={onBack}
+          onClick={() => { haptic(); onBack(); }}
           className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 active:scale-95"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -335,7 +336,7 @@ function LargeShortcutTile({
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => { haptic(); onClick(); }}
       className={cn(
         "group flex-1 w-full rounded-3xl border-2 flex items-center gap-5 px-6",
         "transition-all duration-300 active:scale-[0.98]",
@@ -413,7 +414,7 @@ function ShortcutTile({
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => { haptic(); onClick(); }}
       className={cn(
         "group relative flex flex-col items-center justify-center gap-2.5",
         "h-[88px] rounded-[18px] bg-[#FAFAFA] border border-[#E5E7EB]",

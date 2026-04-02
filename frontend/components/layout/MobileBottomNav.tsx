@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Table2, Calculator, PenLine, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { playClickSound } from "@/lib/audio";
+import { playClickSound, haptic } from "@/lib/audio";
 /** Mobile bottom navigation bar for TODO app */
 export const MobileBottomNav = memo(function MobileBottomNav() {
   const pathname = usePathname();
@@ -19,6 +19,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
 
   const handleNavClick = (href: string) => {
     if (pathname !== href) {
+      haptic();
       playClickSound();
     }
   };
