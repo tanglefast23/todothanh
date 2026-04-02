@@ -104,6 +104,8 @@ export default function RunningTabPage() {
   const adjustAmountRef = useRef<HTMLInputElement>(null);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
   const [topUpConfirmOpen, setTopUpConfirmOpen] = useState(false);
+  const [customTopUpOpen, setCustomTopUpOpen] = useState(false);
+  const [customTopUpAmount, setCustomTopUpAmount] = useState("");
 
   // Prefilled expense state
   const [prefilledExpenseName, setPrefilledExpenseName] = useState("");
@@ -299,6 +301,16 @@ export default function RunningTabPage() {
                   5M Top Up
                 </button>
 
+                {/* Custom Top-Up Button */}
+                <button
+                  onClick={() => setCustomTopUpOpen(true)}
+                  aria-label="Custom top up amount"
+                  className="flex items-center justify-center gap-1 px-3 h-10 rounded-[20px] bg-[#D4F5E2] text-[#15803D] text-[12px] font-bold transition-transform active:scale-95"
+                >
+                  <span className="text-lg font-black leading-none">+</span>
+                  Xx
+                </button>
+
                 {/* Single expense button */}
                 <button
                   type="button"
@@ -480,6 +492,56 @@ export default function RunningTabPage() {
               }}
             >
               Yes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Top-Up Dialog */}
+      <Dialog open={customTopUpOpen} onOpenChange={(open) => {
+        setCustomTopUpOpen(open);
+        if (!open) setCustomTopUpAmount("");
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Custom Top Up</DialogTitle>
+            <DialogDescription>
+              Enter the amount to add to the current balance. This will need to be approved.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-2">
+            <Input
+              type="number"
+              inputMode="numeric"
+              placeholder="e.g. 2000000"
+              value={customTopUpAmount}
+              onChange={(e) => setCustomTopUpAmount(e.target.value)}
+              autoFocus
+            />
+            {customTopUpAmount && Number(customTopUpAmount) > 0 && (
+              <p className="text-sm text-muted-foreground mt-2">
+                +{formatVND(Number(customTopUpAmount))} ₫
+              </p>
+            )}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => {
+              setCustomTopUpOpen(false);
+              setCustomTopUpAmount("");
+            }}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              className="bg-emerald-600 hover:bg-emerald-700"
+              disabled={!customTopUpAmount || Number(customTopUpAmount) <= 0}
+              onClick={() => {
+                addExpense("Kia Top Up", Number(customTopUpAmount), activeOwnerId);
+                setCustomTopUpOpen(false);
+                setCustomTopUpAmount("");
+              }}
+            >
+              Request Top Up
             </Button>
           </DialogFooter>
         </DialogContent>
