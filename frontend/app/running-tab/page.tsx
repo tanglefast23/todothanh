@@ -298,7 +298,7 @@ export default function RunningTabPage() {
                   className="flex items-center justify-center gap-2 px-[18px] h-10 rounded-[20px] bg-[#B6F2CF] text-[#15803D] text-[13px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-2xl font-black leading-none">+</span>
-                  5M Top Up
+                  <span className="font-extrabold">5M</span>
                 </button>
 
                 {/* Custom Top-Up Button */}
