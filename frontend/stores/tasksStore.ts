@@ -12,6 +12,7 @@ import {
   deleteTask as deleteTaskFromSupabase,
 } from "@/lib/supabase/queries/tasks";
 import { deleteAttachment } from "@/lib/supabase/queries/storage";
+import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 
 const TASKS_STORAGE_KEY = "tasks-storage";
 
@@ -75,9 +76,9 @@ export const useTasksStore = create<TasksState>()(
           tasks: [newTask, ...state.tasks],
         }));
 
-        // Sync to Supabase for cross-device sync
-        upsertTasks([newTask]).catch((error) => {
-          console.error("[Store] Failed to sync new task to Supabase:", error);
+        // Sync to Supabase with retry so a single network blip doesn't lose the write
+        retryWithBackoff(() => upsertTasks([newTask]), 3, "addTask").catch((error) => {
+          console.error("[Store] Failed to sync new task to Supabase after retries:", error);
         });
 
         return id;
@@ -99,14 +100,12 @@ export const useTasksStore = create<TasksState>()(
           ),
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateTask(id, {
-          status: "completed",
-          completedBy,
-          completedAt: now,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync task completion to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(
+          () => updateTask(id, { status: "completed", completedBy, completedAt: now, updatedAt: now }),
+          3, "completeTask"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync task completion to Supabase after retries:", error);
         });
       },
 
@@ -126,14 +125,12 @@ export const useTasksStore = create<TasksState>()(
           ),
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateTask(id, {
-          status: "pending",
-          completedBy: null,
-          completedAt: null,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync task uncompletion to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(
+          () => updateTask(id, { status: "pending", completedBy: null, completedAt: null, updatedAt: now }),
+          3, "uncompleteTask"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync task uncompletion to Supabase after retries:", error);
         });
       },
 
@@ -145,18 +142,15 @@ export const useTasksStore = create<TasksState>()(
           tasks: state.tasks.filter((task) => task.id !== id),
         }));
 
-        // Sync to Supabase for cross-device sync
-        deleteTaskFromSupabase(id).catch((error) => {
-          console.error("[Store] Failed to sync task deletion to Supabase:", error);
-          // Restore locally if cloud delete fails to avoid cross-device drift.
-          set((state) => {
-            if (state.tasks.some((task) => task.id === id)) {
-              return state;
-            }
-            return {
-              tasks: [taskToDelete, ...state.tasks],
-            };
-          });
+        // Sync to Supabase with retry — restore locally if all retries fail
+        retryWithBackoff(() => deleteTaskFromSupabase(id), 3, "deleteTask").then((result) => {
+          if (result === undefined) {
+            // All retries failed — restore to avoid cross-device drift
+            set((state) => {
+              if (state.tasks.some((task) => task.id === id)) return state;
+              return { tasks: [taskToDelete, ...state.tasks] };
+            });
+          }
         });
       },
 
@@ -170,12 +164,12 @@ export const useTasksStore = create<TasksState>()(
           ),
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateTask(taskId, {
-          attachmentUrl: url,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync task attachment to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(
+          () => updateTask(taskId, { attachmentUrl: url, updatedAt: now }),
+          3, "setTaskAttachment"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync task attachment to Supabase after retries:", error);
         });
       },
 
@@ -200,12 +194,12 @@ export const useTasksStore = create<TasksState>()(
           console.error("[Store] Failed to delete task attachment from Storage:", error);
         });
 
-        // Sync to Supabase for cross-device sync
-        updateTask(taskId, {
-          attachmentUrl: null,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync task attachment removal to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(
+          () => updateTask(taskId, { attachmentUrl: null, updatedAt: now }),
+          3, "clearTaskAttachment"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync task attachment removal to Supabase after retries:", error);
         });
       },
 

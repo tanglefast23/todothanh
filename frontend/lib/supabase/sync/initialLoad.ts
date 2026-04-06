@@ -31,7 +31,7 @@ import { retryWithBackoff } from "./utils";
 import type { ScheduledEvent } from "@/types/scheduled-events";
 import type { Tag } from "@/types/dashboard";
 import type { Owner } from "@/types/owner";
-import type { AppPermissions, RunningTab, Expense, TabHistoryEntry } from "@/types/runningTab";
+import type { AppPermissions, RunningTab, TabHistoryEntry } from "@/types/runningTab";
 import type { Database } from "@/types/database";
 
 // Database row types for conversions
@@ -136,22 +136,30 @@ export async function performInitialLoad(): Promise<void> {
   const localHistory = useRunningTabStore.getState().history;
   const localScheduledEvents = useScheduledEventsStore.getState().events;
 
-  // Sync Tasks
-  // Never replace local tasks with an empty cloud list. If cloud tasks are empty,
-  // keep local data and rely on per-action writes (add/complete/delete) to sync.
-  if (Array.isArray(cloudTasks) && cloudTasks.length > 0) {
-    useTasksStore.getState().setTasks(cloudTasks);
-  } else if (!Array.isArray(cloudTasks) && Array.isArray(localTasks) && localTasks.length > 0) {
-    // Fallback only if cloud fetch returned undefined (unexpected).
-    // Keep local data and attempt a one-time recovery push.
+  // Sync Tasks — merge cloud + local to prevent losing unsynced items.
+  // Cloud items always win for items in both. Local-only items are preserved
+  // and re-pushed to cloud (they likely failed to sync earlier).
+  if (Array.isArray(cloudTasks)) {
+    const merged = mergeById(cloudTasks, localTasks);
+    useTasksStore.getState().setTasks(merged);
+
+    // Re-push any local-only items to cloud so they don't vanish on other devices
+    const cloudIds = new Set(cloudTasks.map((t) => t.id));
+    const localOnly = localTasks.filter((t) => !cloudIds.has(t.id));
+    if (localOnly.length > 0) {
+      console.log(`[Sync] Re-pushing ${localOnly.length} local-only task(s) to cloud`);
+      upsertTasks(localOnly).catch((error) => {
+        console.error("[Sync] Failed to re-push local tasks to cloud:", error);
+      });
+    }
+  } else if (Array.isArray(localTasks) && localTasks.length > 0) {
+    // Cloud fetch failed entirely (undefined) — keep local, attempt recovery push
     console.log("[Sync] Recovery: pushing local tasks to cloud");
     try {
       await upsertTasks(localTasks);
     } catch (error) {
       console.error("[Sync] Failed to push local tasks to cloud:", error);
     }
-  } else if (Array.isArray(cloudTasks) && cloudTasks.length === 0 && localTasks.length > 0) {
-    console.warn("[Sync] Cloud tasks are empty; preserving local tasks.");
   }
 
   // Sync Tags
@@ -190,16 +198,30 @@ export async function performInitialLoad(): Promise<void> {
     pushToCloud: (data) => (data ? upsertTab(data) : Promise.resolve()),
   });
 
-  // Sync Expenses
-  await syncDataType<Expense[]>({
-    name: "expenses",
-    cloudData: cloudExpenses,
-    localData: localExpenses,
-    hasCloudData: (data) => Array.isArray(data) && data.length > 0,
-    hasLocalData: (data) => Array.isArray(data) && data.length > 0,
-    updateLocal: (data) => useRunningTabStore.getState().setExpenses(data),
-    pushToCloud: (data) => upsertExpenses(data),
-  });
+  // Sync Expenses — merge cloud + local (same strategy as tasks).
+  // Prevents non-master users from losing expenses that failed to sync.
+  if (Array.isArray(cloudExpenses)) {
+    const merged = mergeById(cloudExpenses, localExpenses);
+    useRunningTabStore.getState().setExpenses(merged);
+
+    // Re-push any local-only expenses to cloud
+    const cloudIds = new Set(cloudExpenses.map((e) => e.id));
+    const localOnly = localExpenses.filter((e) => !cloudIds.has(e.id));
+    if (localOnly.length > 0) {
+      console.log(`[Sync] Re-pushing ${localOnly.length} local-only expense(s) to cloud`);
+      upsertExpenses(localOnly).catch((error) => {
+        console.error("[Sync] Failed to re-push local expenses to cloud:", error);
+      });
+    }
+  } else if (Array.isArray(localExpenses) && localExpenses.length > 0) {
+    // Cloud fetch failed entirely — keep local, attempt recovery push
+    console.log("[Sync] Recovery: pushing local expenses to cloud");
+    try {
+      await upsertExpenses(localExpenses);
+    } catch (error) {
+      console.error("[Sync] Failed to push local expenses to cloud:", error);
+    }
+  }
 
   // Sync Tab History
   await syncDataType<TabHistoryEntry[]>({
@@ -256,6 +278,30 @@ async function syncDataType<T>(config: SyncDataTypeConfig<T>): Promise<void> {
     }
   }
   // If both are empty, skip
+}
+
+/**
+ * Merge cloud and local arrays by `id`, preferring cloud versions.
+ *
+ * - Items that exist in both: cloud version wins (it's the source of truth)
+ * - Items only in cloud: included
+ * - Items only in local: included (they likely failed to sync earlier)
+ *
+ * This prevents data loss when a Supabase write silently fails and the next
+ * sync would have overwritten local state with cloud state that's missing
+ * the unsynced item.
+ */
+function mergeById<T extends { id: string }>(cloud: T[], local: T[]): T[] {
+  const cloudMap = new Map(cloud.map((item) => [item.id, item]));
+  const merged = [...cloud];
+
+  for (const localItem of local) {
+    if (!cloudMap.has(localItem.id)) {
+      merged.push(localItem);
+    }
+  }
+
+  return merged;
 }
 
 /**

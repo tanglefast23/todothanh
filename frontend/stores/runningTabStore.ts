@@ -21,6 +21,7 @@ import {
 import { upsertTab, updateTabBalance } from "@/lib/supabase/queries/runningTab";
 import { upsertHistory } from "@/lib/supabase/queries/tabHistory";
 import { deleteAttachments } from "@/lib/supabase/queries/storage";
+import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 
 const RUNNING_TAB_STORAGE_KEY = "running-tab-storage";
 
@@ -134,12 +135,12 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync to Supabase for cross-device sync
-        upsertTab(newTab).catch((error) => {
-          console.error("[Store] Failed to sync tab initialization to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(() => upsertTab(newTab), 3, "initializeBalance:tab").catch((error) => {
+          console.error("[Store] Failed to sync tab initialization to Supabase after retries:", error);
         });
-        upsertHistory([historyEntry]).catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase:", error);
+        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "initializeBalance:history").catch((error) => {
+          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
         });
       },
 
@@ -169,12 +170,12 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateTabBalance(currentTab.id, newBalance).catch((error) => {
-          console.error("[Store] Failed to sync balance adjustment to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(() => updateTabBalance(currentTab.id, newBalance), 3, "adjustBalance").catch((error) => {
+          console.error("[Store] Failed to sync balance adjustment to Supabase after retries:", error);
         });
-        upsertHistory([historyEntry]).catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase:", error);
+        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "adjustBalance:history").catch((error) => {
+          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
         });
       },
 
@@ -204,12 +205,12 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateTabBalance(currentTab.id, newBalance).catch((error) => {
-          console.error("[Store] Failed to sync balance addition to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(() => updateTabBalance(currentTab.id, newBalance), 3, "addToBalance").catch((error) => {
+          console.error("[Store] Failed to sync balance addition to Supabase after retries:", error);
         });
-        upsertHistory([historyEntry]).catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase:", error);
+        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "addToBalance:history").catch((error) => {
+          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
         });
       },
 
@@ -235,9 +236,9 @@ export const useRunningTabStore = create<RunningTabState>()(
           expenses: [newExpense, ...state.expenses],
         }));
 
-        // Sync to Supabase for cross-device sync
-        upsertExpenses([newExpense]).catch((error) => {
-          console.error("[Store] Failed to sync new expense to Supabase:", error);
+        // Sync to Supabase with retry so a network blip doesn't lose the write
+        retryWithBackoff(() => upsertExpenses([newExpense]), 3, "addExpense").catch((error) => {
+          console.error("[Store] Failed to sync new expense to Supabase after retries:", error);
         });
 
         return id;
@@ -263,9 +264,9 @@ export const useRunningTabStore = create<RunningTabState>()(
           expenses: [...newExpenses, ...state.expenses],
         }));
 
-        // Sync to Supabase for cross-device sync
-        upsertExpenses(newExpenses).catch((error) => {
-          console.error("[Store] Failed to sync bulk expenses to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(() => upsertExpenses(newExpenses), 3, "addBulkExpenses").catch((error) => {
+          console.error("[Store] Failed to sync bulk expenses to Supabase after retries:", error);
         });
 
         return newExpenses.map((e) => e.id);
@@ -315,24 +316,24 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync individual changes to Supabase (not the full arrays)
-        updateExpense(id, {
-          status: "approved",
-          approvedBy,
-          approvedAt: now,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync expense approval to Supabase:", error);
+        // Sync individual changes to Supabase with retry
+        retryWithBackoff(
+          () => updateExpense(id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
+          3, "approveExpense"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync expense approval to Supabase after retries:", error);
         });
 
         if (currentTab) {
-          updateTabBalance(currentTab.id, newBalance).catch((error) => {
-            console.error("[Store] Failed to sync tab balance to Supabase:", error);
+          retryWithBackoff(
+            () => updateTabBalance(currentTab.id, newBalance), 3, "approveExpense:balance"
+          ).catch((error) => {
+            console.error("[Store] Failed to sync tab balance to Supabase after retries:", error);
           });
         }
 
-        upsertHistory([historyEntry]).catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase:", error);
+        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "approveExpense:history").catch((error) => {
+          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
         });
       },
 
@@ -383,26 +384,26 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [...newHistoryEntries, ...state.history],
         }));
 
-        // Sync to Supabase: batch where possible
+        // Sync to Supabase with retry: batch where possible
         for (const expense of pendingExpenses) {
-          updateExpense(expense.id, {
-            status: "approved",
-            approvedBy,
-            approvedAt: now,
-            updatedAt: now,
-          }).catch((error) => {
-            console.error("[Store] Failed to sync expense approval to Supabase:", error);
+          retryWithBackoff(
+            () => updateExpense(expense.id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
+            3, "approveAllExpenses"
+          ).catch((error) => {
+            console.error("[Store] Failed to sync expense approval to Supabase after retries:", error);
           });
         }
 
         if (currentTab) {
-          updateTabBalance(currentTab.id, runningBalance).catch((error) => {
-            console.error("[Store] Failed to sync tab balance to Supabase:", error);
+          retryWithBackoff(
+            () => updateTabBalance(currentTab.id, runningBalance), 3, "approveAllExpenses:balance"
+          ).catch((error) => {
+            console.error("[Store] Failed to sync tab balance to Supabase after retries:", error);
           });
         }
 
-        upsertHistory(newHistoryEntries).catch((error) => {
-          console.error("[Store] Failed to sync history entries to Supabase:", error);
+        retryWithBackoff(() => upsertHistory(newHistoryEntries), 3, "approveAllExpenses:history").catch((error) => {
+          console.error("[Store] Failed to sync history entries to Supabase after retries:", error);
         });
       },
 
@@ -443,21 +444,18 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [...newHistoryEntries, ...state.history],
         }));
 
-        // Sync to Supabase
+        // Sync to Supabase with retry
         for (const expense of pendingExpenses) {
-          updateExpense(expense.id, {
-            status: "rejected",
-            approvedBy: rejectedBy,
-            approvedAt: now,
-            rejectionReason: reason,
-            updatedAt: now,
-          }).catch((error) => {
-            console.error("[Store] Failed to sync expense rejection to Supabase:", error);
+          retryWithBackoff(
+            () => updateExpense(expense.id, { status: "rejected", approvedBy: rejectedBy, approvedAt: now, rejectionReason: reason, updatedAt: now }),
+            3, "rejectAllExpenses"
+          ).catch((error) => {
+            console.error("[Store] Failed to sync expense rejection to Supabase after retries:", error);
           });
         }
 
-        upsertHistory(newHistoryEntries).catch((error) => {
-          console.error("[Store] Failed to sync history entries to Supabase:", error);
+        retryWithBackoff(() => upsertHistory(newHistoryEntries), 3, "rejectAllExpenses:history").catch((error) => {
+          console.error("[Store] Failed to sync history entries to Supabase after retries:", error);
         });
       },
 
@@ -495,19 +493,16 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync all changes to Supabase for cross-device sync
-        updateExpense(id, {
-          status: "rejected",
-          approvedBy,
-          approvedAt: now,
-          rejectionReason: reason,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync expense rejection to Supabase:", error);
+        // Sync all changes to Supabase with retry
+        retryWithBackoff(
+          () => updateExpense(id, { status: "rejected", approvedBy, approvedAt: now, rejectionReason: reason, updatedAt: now }),
+          3, "rejectExpense"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync expense rejection to Supabase after retries:", error);
         });
 
-        upsertHistory([historyEntry]).catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase:", error);
+        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "rejectExpense:history").catch((error) => {
+          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
         });
       },
 
@@ -525,12 +520,12 @@ export const useRunningTabStore = create<RunningTabState>()(
           ),
         }));
 
-        // Sync to Supabase for cross-device sync
-        updateExpense(expenseId, {
-          attachmentUrl: url,
-          updatedAt: now,
-        }).catch((error) => {
-          console.error("[Store] Failed to sync attachment to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(
+          () => updateExpense(expenseId, { attachmentUrl: url, updatedAt: now }),
+          3, "setAttachment"
+        ).catch((error) => {
+          console.error("[Store] Failed to sync attachment to Supabase after retries:", error);
         });
       },
 
@@ -550,9 +545,9 @@ export const useRunningTabStore = create<RunningTabState>()(
           expenses: state.expenses.filter((e) => e.id !== id),
         }));
 
-        // Sync to Supabase for cross-device sync
-        deleteExpenseFromSupabase(id).catch((error) => {
-          console.error("[Store] Failed to sync expense deletion to Supabase:", error);
+        // Sync to Supabase with retry
+        retryWithBackoff(() => deleteExpenseFromSupabase(id), 3, "deleteExpense").catch((error) => {
+          console.error("[Store] Failed to sync expense deletion to Supabase after retries:", error);
         });
       },
 

@@ -176,7 +176,15 @@ export async function upsertExpenses(expenses: Expense[]): Promise<void> {
 }
 
 // Bulk sync: replace all expenses
+// WARNING: This deletes ALL expenses globally before inserting. Only use for
+// full data resets, never for incremental sync. Refuses to run with an empty
+// array to prevent accidental data wipes across all devices.
 export async function syncExpenses(expenses: Expense[]): Promise<void> {
+  if (expenses.length === 0) {
+    console.warn("[syncExpenses] Refusing to delete-all with empty replacement set");
+    return;
+  }
+
   const supabase = getSupabaseClient();
 
   // Delete all existing expenses
@@ -190,16 +198,13 @@ export async function syncExpenses(expenses: Expense[]): Promise<void> {
     throw deleteError;
   }
 
-  // Insert all expenses if any exist
-  if (expenses.length > 0) {
-    const rows = expenses.map((expense) => expenseToInsert(expense));
-    const { error: insertError } = await supabase
-      .from("expenses")
-      .insert(rows as never);
+  const rows = expenses.map((expense) => expenseToInsert(expense));
+  const { error: insertError } = await supabase
+    .from("expenses")
+    .insert(rows as never);
 
-    if (insertError) {
-      console.error("Error inserting expenses:", insertError);
-      throw insertError;
-    }
+  if (insertError) {
+    console.error("Error inserting expenses:", insertError);
+    throw insertError;
   }
 }

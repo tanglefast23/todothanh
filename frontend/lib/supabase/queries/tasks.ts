@@ -138,7 +138,15 @@ export async function upsertTasks(tasks: Task[]): Promise<void> {
 }
 
 // Bulk sync: replace all tasks
+// WARNING: This deletes ALL tasks globally before inserting. Only use for
+// full data resets, never for incremental sync. Refuses to run with an empty
+// array to prevent accidental data wipes across all devices.
 export async function syncTasks(tasks: Task[]): Promise<void> {
+  if (tasks.length === 0) {
+    console.warn("[syncTasks] Refusing to delete-all with empty replacement set");
+    return;
+  }
+
   const supabase = getSupabaseClient();
 
   // Delete all existing tasks
@@ -152,16 +160,13 @@ export async function syncTasks(tasks: Task[]): Promise<void> {
     throw deleteError;
   }
 
-  // Insert all tasks if any exist
-  if (tasks.length > 0) {
-    const rows = tasks.map((task) => taskToInsert(task));
-    const { error: insertError } = await supabase
-      .from("tasks")
-      .insert(rows as never);
+  const rows = tasks.map((task) => taskToInsert(task));
+  const { error: insertError } = await supabase
+    .from("tasks")
+    .insert(rows as never);
 
-    if (insertError) {
-      console.error("Error inserting tasks:", insertError);
-      throw insertError;
-    }
+  if (insertError) {
+    console.error("Error inserting tasks:", insertError);
+    throw insertError;
   }
 }

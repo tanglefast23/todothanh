@@ -15,6 +15,8 @@ import {
   Scissors,
   Package,
   ChevronRight,
+  Clock,
+  CookingPot,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -22,13 +24,16 @@ import { haptic } from "@/lib/audio";
 
 interface ExpenseShortcutsProps {
   onSelectExpense: (name: string, tab?: "simple" | "bulk") => void;
+  onDirectExpense: (name: string, amount: number) => void;
 }
 
-type ShortcutStep = "main" | "drinks" | "cats" | "cats-expense";
+type ShortcutStep = "main" | "drinks" | "cats" | "cats-expense" | "ot" | "cooking";
 
-export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
+export function ExpenseShortcuts({ onSelectExpense, onDirectExpense }: ExpenseShortcutsProps) {
   const [step, setStep] = useState<ShortcutStep>("main");
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
+  const [customHours, setCustomHours] = useState("");
+  const [customHoursError, setCustomHoursError] = useState("");
 
   const resetToMain = () => {
     setStep("main");
@@ -60,6 +65,31 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
     resetToMain();
   };
 
+  // OT - direct expense with predetermined amounts
+  const handleOTSelect = (hours: number) => {
+    onDirectExpense(`${hours} hour overtime`, hours * 100000);
+    resetToMain();
+  };
+
+  const handleOTCustomSubmit = () => {
+    const num = Number(customHours);
+    if (!customHours || isNaN(num) || num <= 0) {
+      setCustomHoursError("Numbers only");
+      return;
+    }
+    handleOTSelect(num);
+    setCustomHours("");
+    setCustomHoursError("");
+  };
+
+  // Cooking - direct expense
+  const handleCookingSelect = (size: "small" | "large") => {
+    const amount = size === "small" ? 100000 : 200000;
+    const label = `Cooking a ${size} meal`;
+    onDirectExpense(label, amount);
+    resetToMain();
+  };
+
   // Main shortcuts grid
   if (step === "main") {
     return (
@@ -68,12 +98,19 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-bold tracking-tight text-foreground">Quick Add</h3>
           <span className="text-xs font-semibold text-[#FF6B6B] bg-[#FFF1F0] px-3 py-1.5 rounded-xl">
-            6 categories
+            8 categories
           </span>
         </div>
 
         {/* Row 1 */}
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-4 gap-2">
+          <ShortcutTile
+            onClick={() => { setCustomHours(""); setCustomHoursError(""); setStep("ot"); }}
+            label="OT"
+            icon={Clock}
+            color="blue"
+            hasSubmenu
+          />
           <ShortcutTile
             onClick={() => handleSimpleShortcut("Groceries")}
             label="Groceries"
@@ -96,7 +133,14 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
         </div>
 
         {/* Row 2 */}
-        <div className="grid grid-cols-3 gap-2.5">
+        <div className="grid grid-cols-4 gap-2">
+          <ShortcutTile
+            onClick={() => setStep("cooking")}
+            label="Cooking"
+            icon={CookingPot}
+            color="orange"
+            hasSubmenu
+          />
           <ShortcutTile
             onClick={() => handleSimpleShortcut("Food")}
             label="Food"
@@ -204,6 +248,107 @@ export function ExpenseShortcuts({ onSelectExpense }: ExpenseShortcutsProps) {
           icon={Package}
           color="zinc"
         />
+      </FullScreenOverlay>
+    );
+  }
+
+  // OT overlay — 1hr, 2hr, custom hours
+  if (step === "ot") {
+    return (
+      <FullScreenOverlay title="Overtime" onBack={resetToMain}>
+        <button
+          onClick={() => { haptic(); handleOTSelect(1); }}
+          className={cn(
+            "flex-1 w-full rounded-3xl border-2 flex items-center justify-center gap-3 px-6",
+            "transition-all duration-300 active:scale-[0.98] shadow-lg hover:shadow-xl",
+            "bg-gradient-to-br from-blue-500/15 to-indigo-600/5",
+            "border-blue-500/30 hover:border-blue-400/60",
+          )}
+        >
+          <Clock className="w-7 h-7 text-blue-500" />
+          <span className="text-xl font-bold tracking-tight">1 hr — 100k</span>
+        </button>
+        <button
+          onClick={() => { haptic(); handleOTSelect(2); }}
+          className={cn(
+            "flex-1 w-full rounded-3xl border-2 flex items-center justify-center gap-3 px-6",
+            "transition-all duration-300 active:scale-[0.98] shadow-lg hover:shadow-xl",
+            "bg-gradient-to-br from-blue-500/15 to-indigo-600/5",
+            "border-blue-500/30 hover:border-blue-400/60",
+          )}
+        >
+          <Clock className="w-7 h-7 text-blue-500" />
+          <span className="text-xl font-bold tracking-tight">2 hr — 200k</span>
+        </button>
+        <div className="flex-1 w-full rounded-3xl border-2 border-blue-500/30 bg-gradient-to-br from-blue-500/10 to-indigo-600/5 px-6 flex flex-col items-center justify-center gap-3">
+          <span className="text-sm font-semibold text-muted-foreground">Custom hours</span>
+          <div className="flex gap-2 w-full max-w-xs">
+            <input
+              type="text"
+              inputMode="numeric"
+              value={customHours}
+              onChange={(e) => {
+                setCustomHours(e.target.value);
+                setCustomHoursError("");
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleOTCustomSubmit(); }}
+              placeholder="Hours"
+              className="flex-1 rounded-xl border border-blue-400/40 bg-background/60 px-4 py-2.5 text-center text-lg font-semibold outline-none focus:border-blue-400 placeholder:text-muted-foreground/50"
+            />
+            <button
+              onClick={() => { haptic(); handleOTCustomSubmit(); }}
+              disabled={!customHours}
+              className={cn(
+                "px-5 py-2.5 rounded-xl font-bold text-white transition-all active:scale-95",
+                customHours
+                  ? "bg-gradient-to-r from-blue-500 to-indigo-500 shadow-md"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
+              )}
+            >
+              Add
+            </button>
+          </div>
+          {customHoursError && (
+            <p className="text-red-400 text-sm font-medium">{customHoursError}</p>
+          )}
+          {customHours && !customHoursError && !isNaN(Number(customHours)) && Number(customHours) > 0 && (
+            <p className="text-sm text-muted-foreground">
+              = {(Number(customHours) * 100000).toLocaleString("vi-VN")}đ
+            </p>
+          )}
+        </div>
+      </FullScreenOverlay>
+    );
+  }
+
+  // Cooking overlay — Small or Large
+  if (step === "cooking") {
+    return (
+      <FullScreenOverlay title="Cooking" onBack={resetToMain}>
+        <button
+          onClick={() => { haptic(); handleCookingSelect("small"); }}
+          className={cn(
+            "flex-1 w-full rounded-3xl border-2 flex items-center justify-center gap-3 px-6",
+            "transition-all duration-300 active:scale-[0.98] shadow-lg hover:shadow-xl",
+            "bg-gradient-to-br from-orange-500/15 to-amber-600/5",
+            "border-orange-500/30 hover:border-orange-400/60",
+          )}
+        >
+          <CookingPot className="w-7 h-7 text-orange-500" />
+          <span className="text-xl font-bold tracking-tight">Small — 100k</span>
+        </button>
+        <button
+          onClick={() => { haptic(); handleCookingSelect("large"); }}
+          className={cn(
+            "flex-1 w-full rounded-3xl border-2 flex items-center justify-center gap-3 px-6",
+            "transition-all duration-300 active:scale-[0.98] shadow-lg hover:shadow-xl",
+            "bg-gradient-to-br from-orange-500/15 to-amber-600/5",
+            "border-orange-500/30 hover:border-orange-400/60",
+          )}
+        >
+          <CookingPot className="w-7 h-7 text-orange-500" />
+          <span className="text-xl font-bold tracking-tight">Large — 200k</span>
+        </button>
       </FullScreenOverlay>
     );
   }
@@ -392,6 +537,8 @@ const tileIconColors = {
   rose: { bg: "bg-[#FFE4E6]", text: "text-rose-600" },
   slate: { bg: "bg-[#F1F5F9]", text: "text-slate-500" },
   violet: { bg: "bg-[#EDE9FE]", text: "text-violet-600" },
+  blue: { bg: "bg-[#DBEAFE]", text: "text-blue-600" },
+  orange: { bg: "bg-[#FFEDD5]", text: "text-orange-600" },
 };
 
 // Compact shortcut tile for main grid — Pencil redesign

@@ -347,7 +347,7 @@ export default function RunningTabPage() {
               />
 
               {/* Quick Add Shortcuts */}
-              <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} />
+              <ExpenseShortcuts onSelectExpense={handleShortcutSelectExpense} onDirectExpense={handleAddExpense} />
 
               {/* Expense List (Pending + Approved + Rejected) */}
               <ExpenseList
