@@ -105,13 +105,6 @@ export function ExpenseShortcuts({ onSelectExpense, onDirectExpense }: ExpenseSh
         {/* Row 1 */}
         <div className="grid grid-cols-4 gap-2">
           <ShortcutTile
-            onClick={() => { setCustomHours(""); setCustomHoursError(""); setStep("ot"); }}
-            label="OT"
-            icon={Clock}
-            color="blue"
-            hasSubmenu
-          />
-          <ShortcutTile
             onClick={() => handleSimpleShortcut("Groceries")}
             label="Groceries"
             icon={ShoppingCart}
@@ -130,17 +123,17 @@ export function ExpenseShortcuts({ onSelectExpense, onDirectExpense }: ExpenseSh
             color="cyan"
             hasSubmenu
           />
+          <ShortcutTile
+            onClick={() => { setCustomHours(""); setCustomHoursError(""); setStep("ot"); }}
+            label="OT"
+            icon={Clock}
+            color="blue"
+            hasSubmenu
+          />
         </div>
 
         {/* Row 2 */}
         <div className="grid grid-cols-4 gap-2">
-          <ShortcutTile
-            onClick={() => setStep("cooking")}
-            label="Cooking"
-            icon={CookingPot}
-            color="orange"
-            hasSubmenu
-          />
           <ShortcutTile
             onClick={() => handleSimpleShortcut("Food")}
             label="Food"
@@ -158,6 +151,13 @@ export function ExpenseShortcuts({ onSelectExpense, onDirectExpense }: ExpenseSh
             label="Cats"
             icon={Cat}
             color="violet"
+            hasSubmenu
+          />
+          <ShortcutTile
+            onClick={() => setStep("cooking")}
+            label="Cooking"
+            icon={CookingPot}
+            color="orange"
             hasSubmenu
           />
         </div>
@@ -442,8 +442,8 @@ function FullScreenOverlay({
 }) {
   return (
     <div className="fixed inset-0 z-50 bg-background/95 backdrop-blur-2xl flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
-      {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b border-border/50">
+      {/* Header — pt includes safe area for Dynamic Island / status bar */}
+      <div className="flex items-center gap-3 px-4 pb-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-border/50">
         <button
           onClick={() => { haptic(); onBack(); }}
           className="p-2.5 rounded-xl bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 active:scale-95"
