@@ -136,22 +136,11 @@ export async function performInitialLoad(): Promise<void> {
   const localHistory = useRunningTabStore.getState().history;
   const localScheduledEvents = useScheduledEventsStore.getState().events;
 
-  // Sync Tasks — merge cloud + local to prevent losing unsynced items.
-  // Cloud items always win for items in both. Local-only items are preserved
-  // and re-pushed to cloud (they likely failed to sync earlier).
+  // Sync Tasks — when cloud fetch succeeds, cloud is the source of truth.
+  // Safari and installed iOS PWAs can keep separate localStorage caches; merging
+  // local-only rows here can resurrect tasks that were already deleted in cloud.
   if (Array.isArray(cloudTasks)) {
-    const merged = mergeById(cloudTasks, localTasks);
-    useTasksStore.getState().setTasks(merged);
-
-    // Re-push any local-only items to cloud so they don't vanish on other devices
-    const cloudIds = new Set(cloudTasks.map((t) => t.id));
-    const localOnly = localTasks.filter((t) => !cloudIds.has(t.id));
-    if (localOnly.length > 0) {
-      console.log(`[Sync] Re-pushing ${localOnly.length} local-only task(s) to cloud`);
-      upsertTasks(localOnly).catch((error) => {
-        console.error("[Sync] Failed to re-push local tasks to cloud:", error);
-      });
-    }
+    useTasksStore.getState().setTasks(cloudTasks);
   } else if (Array.isArray(localTasks) && localTasks.length > 0) {
     // Cloud fetch failed entirely (undefined) — keep local, attempt recovery push
     console.log("[Sync] Recovery: pushing local tasks to cloud");

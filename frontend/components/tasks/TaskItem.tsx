@@ -90,16 +90,21 @@ export function TaskItem({
       onContextMenu={handleContextMenu}
     >
       {/* Delete X button for completed tasks - admin only */}
+      {/* Outer wrapper is 40x40 for reliable mobile taps; inner circle is 24x24 visual */}
       {isCompleted && canDelete && !showDeleteConfirm && (
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete(task.id);
           }}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110"
+          onTouchStart={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="absolute -top-4 -right-4 w-10 h-10 flex items-center justify-center"
           title="Remove completed task"
         >
-          <X className="w-4 h-4" />
+          <span className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center shadow-lg transition-all hover:scale-110">
+            <X className="w-4 h-4" />
+          </span>
         </button>
       )}
 
