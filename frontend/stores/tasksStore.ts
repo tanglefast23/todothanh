@@ -143,8 +143,15 @@ export const useTasksStore = create<TasksState>()(
         }));
 
         // Sync to Supabase with retry — restore locally if all retries fail
-        retryWithBackoff(() => deleteTaskFromSupabase(id), 3, "deleteTask").then((result) => {
-          if (result === undefined) {
+        retryWithBackoff(
+          async () => {
+            await deleteTaskFromSupabase(id);
+            return true;
+          },
+          3,
+          "deleteTask"
+        ).then((deleteSucceeded) => {
+          if (!deleteSucceeded) {
             // All retries failed — restore to avoid cross-device drift
             set((state) => {
               if (state.tasks.some((task) => task.id === id)) return state;
