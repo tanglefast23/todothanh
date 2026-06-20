@@ -9,6 +9,22 @@ type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
 type ExpenseInsert = Database["public"]["Tables"]["expenses"]["Insert"];
 type ExpenseUpdate = Database["public"]["Tables"]["expenses"]["Update"];
 
+function parseAttachmentUrls(raw: string | null): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {
+    // legacy single URL stored as plain string
+  }
+  return [raw];
+}
+
+function serializeAttachmentUrls(urls: string[]): string | null {
+  if (!urls || urls.length === 0) return null;
+  return JSON.stringify(urls);
+}
+
 // Convert database row to app type (snake_case to camelCase)
 function rowToExpense(row: ExpenseRow): Expense {
   return {
@@ -20,7 +36,7 @@ function rowToExpense(row: ExpenseRow): Expense {
     approvedBy: row.approved_by,
     approvedAt: row.approved_at,
     status: row.status,
-    attachmentUrl: row.attachment_url,
+    attachmentUrls: parseAttachmentUrls(row.attachment_url),
     rejectionReason: row.rejection_reason,
     updatedAt: row.updated_at,
   };
@@ -37,7 +53,7 @@ function expenseToInsert(expense: Omit<Expense, "id"> & { id?: string }): Expens
     approved_by: expense.approvedBy,
     approved_at: expense.approvedAt,
     status: expense.status,
-    attachment_url: expense.attachmentUrl,
+    attachment_url: serializeAttachmentUrls(expense.attachmentUrls ?? []),
     rejection_reason: expense.rejectionReason,
     updated_at: expense.updatedAt,
   };
@@ -52,7 +68,7 @@ function expenseToUpdate(expense: Partial<Expense>): ExpenseUpdate {
   if (expense.approvedBy !== undefined) update.approved_by = expense.approvedBy;
   if (expense.approvedAt !== undefined) update.approved_at = expense.approvedAt;
   if (expense.status !== undefined) update.status = expense.status;
-  if (expense.attachmentUrl !== undefined) update.attachment_url = expense.attachmentUrl;
+  if (expense.attachmentUrls !== undefined) update.attachment_url = serializeAttachmentUrls(expense.attachmentUrls);
   if (expense.rejectionReason !== undefined) update.rejection_reason = expense.rejectionReason;
   if (expense.updatedAt !== undefined) update.updated_at = expense.updatedAt;
   return update;

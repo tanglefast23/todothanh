@@ -18,7 +18,7 @@ export interface Expense {
   approvedBy: string | null;
   approvedAt: string | null;
   status: ExpenseStatus;
-  attachmentUrl: string | null;
+  attachmentUrls: string[];
   rejectionReason: string | null;
   updatedAt: string;
 }

@@ -227,7 +227,7 @@ export const useRunningTabStore = create<RunningTabState>()(
           approvedBy: null,
           approvedAt: null,
           status: "pending",
-          attachmentUrl: null,
+          attachmentUrls: [],
           rejectionReason: null,
           updatedAt: now,
         };
@@ -255,7 +255,7 @@ export const useRunningTabStore = create<RunningTabState>()(
           approvedBy: null,
           approvedAt: null,
           status: "pending" as ExpenseStatus,
-          attachmentUrl: null,
+          attachmentUrls: [],
           rejectionReason: null,
           updatedAt: now,
         }));
@@ -508,21 +508,18 @@ export const useRunningTabStore = create<RunningTabState>()(
 
       setAttachment: (expenseId, url) => {
         const now = new Date().toISOString();
+        let updatedUrls: string[] = [];
         set((state) => ({
-          expenses: state.expenses.map((e) =>
-            e.id === expenseId
-              ? {
-                  ...e,
-                  attachmentUrl: url,
-                  updatedAt: now,
-                }
-              : e
-          ),
+          expenses: state.expenses.map((e) => {
+            if (e.id !== expenseId) return e;
+            updatedUrls = [...e.attachmentUrls, url];
+            return { ...e, attachmentUrls: updatedUrls, updatedAt: now };
+          }),
         }));
 
         // Sync to Supabase with retry
         retryWithBackoff(
-          () => updateExpense(expenseId, { attachmentUrl: url, updatedAt: now }),
+          () => updateExpense(expenseId, { attachmentUrls: updatedUrls, updatedAt: now }),
           3, "setAttachment"
         ).catch((error) => {
           console.error("[Store] Failed to sync attachment to Supabase after retries:", error);
@@ -534,9 +531,9 @@ export const useRunningTabStore = create<RunningTabState>()(
         // Only allow deletion of pending or rejected expenses
         if (!expense || expense.status === "approved") return;
 
-        // Clean up attachment from Supabase Storage
-        if (expense.attachmentUrl) {
-          deleteAttachments([expense.attachmentUrl]).catch((error) => {
+        // Clean up attachments from Supabase Storage
+        if (expense.attachmentUrls.length > 0) {
+          deleteAttachments(expense.attachmentUrls).catch((error) => {
             console.error("[Store] Failed to delete attachment from Storage:", error);
           });
         }
@@ -556,9 +553,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const completedExpenses = get().expenses.filter(
           (e) => e.status === "approved" || e.status === "rejected"
         );
-        const attachmentUrls = completedExpenses
-          .map((e) => e.attachmentUrl)
-          .filter((url): url is string => url !== null && url.length > 0);
+        const attachmentUrls = completedExpenses.flatMap((e) => e.attachmentUrls);
 
         // Keep only pending expenses, remove approved and rejected
         set((state) => ({
@@ -593,9 +588,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         if (expired.length === 0) return;
 
         // Collect attachment URLs before removing
-        const attachmentUrls = expired
-          .map((e) => e.attachmentUrl)
-          .filter((url): url is string => url !== null && url.length > 0);
+        const attachmentUrls = expired.flatMap((e) => e.attachmentUrls);
 
         const expiredIds = new Set(expired.map((e) => e.id));
 
