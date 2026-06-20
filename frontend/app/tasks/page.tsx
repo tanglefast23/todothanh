@@ -16,6 +16,7 @@ export default function TasksPage() {
   const completeTask = useTasksStore((state) => state.completeTask);
   const uncompleteTask = useTasksStore((state) => state.uncompleteTask);
   const deleteTask = useTasksStore((state) => state.deleteTask);
+  const autoCleanCompletedTasks = useTasksStore((state) => state.autoCleanCompletedTasks);
   // Owner state
   const owners = useOwnerStore((state) => state.owners);
   const getActiveOwnerId = useOwnerStore((state) => state.getActiveOwnerId);
@@ -26,6 +27,12 @@ export default function TasksPage() {
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      autoCleanCompletedTasks();
+    }
+  }, [isMounted, autoCleanCompletedTasks]);
 
   const activeOwnerId = isMounted ? getActiveOwnerId() : null;
   const isMaster = isMounted ? isMasterLoggedIn() : false;
