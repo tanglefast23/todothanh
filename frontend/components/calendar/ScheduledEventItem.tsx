@@ -31,8 +31,11 @@ export function ScheduledEventItem({
 }: ScheduledEventItemProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const isCompleted = event.status === "completed";
-  const scheduledDate = new Date(event.scheduledAt);
-  const isOverdue = isPast(scheduledDate) && !isCompleted;
+  const isAllDay = !event.scheduledAt.includes("T");
+  const scheduledDate = isAllDay
+    ? (() => { const [y, m, d] = event.scheduledAt.split("-").map(Number); return new Date(y, m - 1, d); })()
+    : new Date(event.scheduledAt);
+  const isOverdue = isPast(scheduledDate) && !isCompleted && !isAllDay;
 
   const handleCheckChange = (checked: boolean) => {
     if (!canComplete) return;
@@ -125,7 +128,9 @@ export function ScheduledEventItem({
             className="flex items-center gap-1.5"
             style={{ color: isCompleted ? "#9CA3AF" : getAccentColor() }}
           >
-            <span className="text-xl font-bold tracking-tight">{format(scheduledDate, "h:mm a")}</span>
+            <span className="text-xl font-bold tracking-tight">
+              {isAllDay ? "All Day" : format(scheduledDate, "h:mm a")}
+            </span>
           </div>
           {isOverdue && !isCompleted && (
             <span className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-[#EF4444] text-white">Overdue</span>
