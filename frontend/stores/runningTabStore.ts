@@ -24,6 +24,7 @@ import { deleteAttachments } from "@/lib/supabase/queries/storage";
 import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 
 const RUNNING_TAB_STORAGE_KEY = "running-tab-storage";
+const MAX_SEARCHED_MONTHS = 12;
 
 function generateId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -94,9 +95,16 @@ export const useRunningTabStore = create<RunningTabState>()(
       setHistory: (history) => set({ history }),
 
       setSearchedMonth: (key, entries) =>
-        set((state) => ({
-          searchedHistory: { ...state.searchedHistory, [key]: entries },
-        })),
+        set((state) => {
+          const next = { ...state.searchedHistory, [key]: entries };
+          // Evict the oldest month(s) when the cap is exceeded so localStorage
+          // doesn't grow unboundedly as users search more and more past months.
+          const keys = Object.keys(next).sort(); // ascending = oldest first
+          while (keys.length > MAX_SEARCHED_MONTHS) {
+            delete next[keys.shift()!];
+          }
+          return { searchedHistory: next };
+        }),
       removeSearchedMonth: (key) =>
         set((state) => {
           const next = { ...state.searchedHistory };

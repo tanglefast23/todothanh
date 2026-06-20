@@ -43,6 +43,9 @@ interface TasksState {
   setTaskAttachment: (taskId: string, url: string) => void;
   clearTaskAttachment: (taskId: string) => void;
 
+  // Cleanup
+  autoCleanCompletedTasks: () => void;
+
   // Getters
   getPendingTasks: () => Task[];
   getCompletedTasks: () => Task[];
@@ -208,6 +211,36 @@ export const useTasksStore = create<TasksState>()(
         ).catch((error) => {
           console.error("[Store] Failed to sync task attachment removal to Supabase after retries:", error);
         });
+      },
+
+      autoCleanCompletedTasks: () => {
+        const THREE_MONTHS_MS = 90 * 24 * 60 * 60 * 1000;
+        const cutoff = new Date(Date.now() - THREE_MONTHS_MS).toISOString();
+
+        const expired = get().tasks.filter(
+          (t) =>
+            t.status === "completed" &&
+            t.completedAt !== null &&
+            t.completedAt < cutoff
+        );
+
+        if (expired.length === 0) return;
+
+        const expiredIds = new Set(expired.map((t) => t.id));
+
+        set((state) => ({
+          tasks: state.tasks.filter((t) => !expiredIds.has(t.id)),
+        }));
+
+        for (const task of expired) {
+          retryWithBackoff(
+            () => deleteTaskFromSupabase(task.id),
+            3,
+            "autoCleanCompletedTasks"
+          ).catch((error) => {
+            console.error("[Store] Failed to delete expired task from Supabase:", error);
+          });
+        }
       },
 
       getPendingTasks: () => {
