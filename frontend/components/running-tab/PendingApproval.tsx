@@ -106,6 +106,32 @@ interface PendingExpenseCardProps {
   onAttachment: (id: string, url: string) => void;
 }
 
+function AttachmentThumb({ url }: { url: string }) {
+  const [imageError, setImageError] = useState(false);
+  const isPdf = url.toLowerCase().includes(".pdf");
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="group relative shrink-0 block">
+      {isPdf || imageError ? (
+        <div className="flex size-[38px] items-center justify-center rounded-xl bg-[#FDF2F8] transition-colors hover:bg-[#FCE7F3]">
+          <FileText className="size-[18px] text-pink-500" />
+        </div>
+      ) : (
+        <div className="relative size-[38px] overflow-hidden rounded-xl border border-pink-400/50 hover:border-pink-400 transition-all">
+          <img
+            src={url}
+            alt="Attachment"
+            className="size-full object-cover group-hover:scale-105 transition-transform"
+            onError={() => setImageError(true)}
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+            <ExternalLink className="size-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
+        </div>
+      )}
+    </a>
+  );
+}
+
 function PendingExpenseCard({
   expense,
   canApprove,
@@ -113,9 +139,7 @@ function PendingExpenseCard({
   onReject,
   onAttachment,
 }: PendingExpenseCardProps) {
-  const [imageError, setImageError] = useState(false);
   const { Icon, color, bg } = getExpenseIcon(expense.name);
-  const isPdf = expense.attachmentUrl?.toLowerCase().includes(".pdf");
 
   return (
     <div className="flex flex-col gap-3 rounded-[18px] bg-[#F6F7F8] p-4">
@@ -143,41 +167,17 @@ function PendingExpenseCard({
         </span>
       </div>
 
-      {/* Attachment button — available to all users */}
+      {/* Attachments + upload button */}
       <div className="flex items-center gap-2.5">
-        {!expense.attachmentUrl ? (
-          <div className="shrink-0">
-            <AttachmentUpload
-              expenseId={expense.id}
-              onUpload={(url) => onAttachment(expense.id, url)}
-            />
-          </div>
-        ) : (
-          <a
-            href={expense.attachmentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative shrink-0 block"
-          >
-            {isPdf || imageError ? (
-              <div className="flex size-[38px] items-center justify-center rounded-xl bg-[#FDF2F8] transition-colors hover:bg-[#FCE7F3]">
-                <FileText className="size-[18px] text-pink-500" />
-              </div>
-            ) : (
-              <div className="relative size-[38px] overflow-hidden rounded-xl border border-pink-400/50 hover:border-pink-400 transition-all">
-                <img
-                  src={expense.attachmentUrl}
-                  alt="Attachment"
-                  className="size-full object-cover group-hover:scale-105 transition-transform"
-                  onError={() => setImageError(true)}
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <ExternalLink className="size-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                </div>
-              </div>
-            )}
-          </a>
-        )}
+        <div className="shrink-0">
+          <AttachmentUpload
+            expenseId={expense.id}
+            onUpload={(url) => onAttachment(expense.id, url)}
+          />
+        </div>
+        {expense.attachmentUrls.map((url, i) => (
+          <AttachmentThumb key={i} url={url} />
+        ))}
 
         {/* Reject + Approve — only for approvers */}
         {canApprove && (
