@@ -16,10 +16,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MobileToggle } from "@/components/ui/mobile-toggle";
-import { useOwnerStore } from "@/stores/ownerStore";
+import { useOwnerStore, ACTIVE_OWNER_CHANGED_EVENT } from "@/stores/ownerStore";
 import { useShallow } from "zustand/react/shallow";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
+import { AVATAR_COLORS, getProfilePicture } from "@/lib/colors";
 
 // Navigation items for the header (Settings moved to right side as icon)
 const navItems = [
@@ -27,35 +28,6 @@ const navItems = [
   { title: "Tasks", href: "/tasks", icon: Table2 },
   { title: "Calendar", href: "/calendar", icon: CalendarDays },
   { title: "Running Tab", href: "/running-tab", icon: DollarSign },
-];
-
-// Profile pictures for known users (case-insensitive match)
-const PROFILE_PICTURES: Record<string, string> = {
-  joe: "/joe.png",
-  cliff: "/cliff.png",
-  foad: "/foad.png",
-  ivy: "/ivy.png",
-  leonard: "/leonard.png",
-  thanh: "/thanh.png",
-};
-
-// Get profile picture path for a name, or null if not found
-function getProfilePicture(name: string | undefined | null): string | null {
-  if (!name || typeof name !== "string") return null;
-  const normalizedName = name.toLowerCase().trim();
-  return PROFILE_PICTURES[normalizedName] || null;
-}
-
-// Same color palette as AccountSelector for consistency (fallback)
-const AVATAR_COLORS = [
-  { bg: "bg-violet-500", text: "text-white" },
-  { bg: "bg-emerald-500", text: "text-white" },
-  { bg: "bg-amber-500", text: "text-white" },
-  { bg: "bg-rose-500", text: "text-white" },
-  { bg: "bg-cyan-500", text: "text-white" },
-  { bg: "bg-fuchsia-500", text: "text-white" },
-  { bg: "bg-lime-500", text: "text-white" },
-  { bg: "bg-orange-500", text: "text-white" },
 ];
 
 export function Header() {
@@ -75,8 +47,17 @@ export function Header() {
 
   // Hydration-safe
   const [isMounted, setIsMounted] = useState(false);
+  // Force re-render when active owner changes (e.g. logout in another tab)
+  const [, setOwnerVersion] = useState(0);
+
   useEffect(() => {
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const handleOwnerChange = () => setOwnerVersion((v) => v + 1);
+    window.addEventListener(ACTIVE_OWNER_CHANGED_EVENT, handleOwnerChange);
+    return () => window.removeEventListener(ACTIVE_OWNER_CHANGED_EVENT, handleOwnerChange);
   }, []);
 
   const activeOwner = isMounted ? getActiveOwner() : null;

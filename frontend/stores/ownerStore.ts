@@ -9,12 +9,6 @@ import type { Owner } from "@/types/owner";
 import { OWNER_STORAGE_KEY, UNLOCK_STATE_KEY } from "@/types/owner";
 import { hashPassword, verifyPassword, needsHashUpgrade } from "@/lib/crypto";
 
-// No-op function - portfolio functionality has been removed
-function resetPortfolioView(): void {
-  // This function was previously used to reset portfolio view on login/logout
-  // It's kept as a no-op to maintain function call sites
-}
-
 // Special ID for guest users (no password, only sees public portfolios)
 export const GUEST_ID = "__guest__";
 const ACTIVE_OWNER_KEY = "todo-active-owner-id";
@@ -377,9 +371,6 @@ export const useOwnerStore = create<OwnerState>()(
           }
         }
 
-        // Reset portfolio view BEFORE changing user (security: prevent data leakage)
-        resetPortfolioView();
-
         setActiveOwnerId(id);
         // Also add to legacy unlock state for backwards compatibility
         const current = getUnlockedOwnerIds();
@@ -390,14 +381,10 @@ export const useOwnerStore = create<OwnerState>()(
       },
 
       loginAsGuest: () => {
-        // Reset portfolio view BEFORE changing user (security: prevent data leakage)
-        resetPortfolioView();
         setActiveOwnerId(GUEST_ID);
       },
 
       logout: () => {
-        // Reset portfolio view BEFORE logging out (security: prevent data leakage)
-        resetPortfolioView();
         setActiveOwnerId(null);
         // Clear legacy unlock state too
         setUnlockedOwnerIds([]);
