@@ -6,6 +6,7 @@ import { TaskList } from "@/components/tasks/TaskList";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useTasksStore } from "@/stores/tasksStore";
 import { useOwnerStore } from "@/stores/ownerStore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function TasksPage() {
   // Redirect to login if not authenticated
@@ -63,11 +64,24 @@ export default function TasksPage() {
     deleteTask(id);
   }, [deleteTask, isMaster, tasks]);
 
-  // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-32" />
+              <Skeleton className="h-4 w-48" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-3/4 rounded-2xl" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

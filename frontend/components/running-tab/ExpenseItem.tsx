@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Check, X, FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -143,7 +143,7 @@ const statusConfig: Record<
   },
 };
 
-export function ExpenseItem({
+export const ExpenseItem = memo(function ExpenseItem({
   expense,
   creatorName,
   approverName,
@@ -274,4 +274,4 @@ export function ExpenseItem({
       </div>
     </div>
   );
-}
+});

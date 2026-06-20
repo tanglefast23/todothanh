@@ -13,6 +13,11 @@ export function createClient() {
       "Missing Supabase environment variables. Please add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to your environment."
     );
   }
+  if (!supabaseUrl.startsWith("https://")) {
+    throw new Error(
+      "Invalid NEXT_PUBLIC_SUPABASE_URL: must start with https://"
+    );
+  }
   return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
 }
 

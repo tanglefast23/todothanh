@@ -1,9 +1,11 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { PROFILE_PICTURES } from "@/lib/colors";
 
-// Same colors used in AccountSelector for consistency
-const AVATAR_COLORS = [
+// Deterministic color palette — chosen by hashing the name, distinct from the
+// positional palette used in AccountSelector / Header.
+const CREATOR_AVATAR_COLORS = [
   "bg-blue-500",
   "bg-green-500",
   "bg-purple-500",
@@ -13,16 +15,6 @@ const AVATAR_COLORS = [
   "bg-indigo-500",
   "bg-rose-500",
 ];
-
-// Map of names to profile pictures in /public folder
-const PROFILE_PICTURES: Record<string, string> = {
-  joe: "/joe.png",
-  ivy: "/ivy.png",
-  cliff: "/cliff.png",
-  foad: "/foad.png",
-  leonard: "/leonard.png",
-  thanh: "/thanh.png",
-};
 
 interface CreatorAvatarProps {
   name: string;
@@ -44,9 +36,9 @@ export function CreatorAvatar({ name, className, size = "sm" }: CreatorAvatarPro
     .slice(0, 2)
     .toUpperCase();
 
-  // Consistent color based on name
-  const colorIndex = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % AVATAR_COLORS.length;
-  const bgColor = AVATAR_COLORS[colorIndex];
+  // Consistent color based on name hash
+  const colorIndex = name.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % CREATOR_AVATAR_COLORS.length;
+  const bgColor = CREATOR_AVATAR_COLORS[colorIndex];
 
   const sizeClasses = {
     sm: "h-6 w-6 text-xs",

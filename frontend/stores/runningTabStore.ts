@@ -26,6 +26,9 @@ import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 const RUNNING_TAB_STORAGE_KEY = "running-tab-storage";
 const MAX_SEARCHED_MONTHS = 12;
 
+/** Expense name that triggers a balance top-up rather than a deduction. */
+export const TOPUP_EXPENSE_NAME = "Kia Top Up";
+
 function generateId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return crypto.randomUUID();
@@ -289,7 +292,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const historyId = generateId();
 
         // Check if this is a top-up (adds money) vs expense (subtracts money)
-        const isTopUp = expense.name === "Kia Top Up";
+        const isTopUp = expense.name === TOPUP_EXPENSE_NAME;
         const balanceChange = isTopUp ? expense.amount : -expense.amount;
         const newBalance = (currentTab?.currentBalance ?? 0) + balanceChange;
 
@@ -324,25 +327,34 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync individual changes to Supabase with retry
-        retryWithBackoff(
-          () => updateExpense(id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
-          3, "approveExpense"
-        ).catch((error) => {
-          console.error("[Store] Failed to sync expense approval to Supabase after retries:", error);
-        });
+        // Capture pre-change state for rollback if primary sync fails
+        const savedExpenses = get().expenses;
+        const savedTab = get().tab;
+        const savedHistory = get().history;
 
-        if (currentTab) {
-          retryWithBackoff(
-            () => updateTabBalance(currentTab.id, newBalance), 3, "approveExpense:balance"
-          ).catch((error) => {
-            console.error("[Store] Failed to sync tab balance to Supabase after retries:", error);
-          });
-        }
+        // Sync sequentially: if the expense update fails, rollback local state.
+        // Balance and history sync failures are logged but don't roll back
+        // (they are idempotent and will be retried on next app load).
+        (async () => {
+          const expenseResult = await retryWithBackoff(
+            () => updateExpense(id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
+            3, "approveExpense"
+          );
 
-        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "approveExpense:history").catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
-        });
+          if (expenseResult === undefined) {
+            console.error("[Store] approveExpense: primary sync failed, rolling back local state");
+            set({ expenses: savedExpenses, tab: savedTab, history: savedHistory });
+            return;
+          }
+
+          if (currentTab) {
+            await retryWithBackoff(
+              () => updateTabBalance(currentTab.id, newBalance), 3, "approveExpense:balance"
+            );
+          }
+
+          await retryWithBackoff(() => upsertHistory([historyEntry]), 3, "approveExpense:history");
+        })();
       },
 
       approveAllPendingExpenses: (approvedBy) => {
@@ -358,7 +370,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const newHistoryEntries: TabHistoryEntry[] = [];
 
         for (const expense of pendingExpenses) {
-          const isTopUp = expense.name === "Kia Top Up";
+          const isTopUp = expense.name === TOPUP_EXPENSE_NAME;
           const balanceChange = isTopUp ? expense.amount : -expense.amount;
           runningBalance += balanceChange;
 
