@@ -26,6 +26,7 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
   const [selectedHour, setSelectedHour] = useState("12");
   const [selectedMinute, setSelectedMinute] = useState("00");
   const [selectedPeriod, setSelectedPeriod] = useState<"AM" | "PM">("PM");
+  const [isAllDay, setIsAllDay] = useState(false);
   const [step, setStep] = useState<ScheduleStep>("date");
   const inputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -33,6 +34,7 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
   useEffect(() => {
     if (!isDialogOpen) {
       setStep("date");
+      setIsAllDay(false);
     }
   }, [isDialogOpen]);
 
@@ -52,26 +54,32 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
   const handleConfirmSchedule = () => {
     if (!selectedDate) return;
 
-    let hour = parseInt(selectedHour, 10);
-    if (selectedPeriod === "PM" && hour !== 12) {
-      hour += 12;
-    } else if (selectedPeriod === "AM" && hour === 12) {
-      hour = 0;
-    }
-
-    const scheduledDate = new Date(selectedDate);
-    scheduledDate.setHours(hour, parseInt(selectedMinute, 10), 0, 0);
-
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
 
-    onScheduleTask(trimmedTitle, scheduledDate.toISOString());
+    let scheduledAt: string;
+    if (isAllDay) {
+      scheduledAt = format(selectedDate, "yyyy-MM-dd");
+    } else {
+      let hour = parseInt(selectedHour, 10);
+      if (selectedPeriod === "PM" && hour !== 12) {
+        hour += 12;
+      } else if (selectedPeriod === "AM" && hour === 12) {
+        hour = 0;
+      }
+      const scheduledDate = new Date(selectedDate);
+      scheduledDate.setHours(hour, parseInt(selectedMinute, 10), 0, 0);
+      scheduledAt = scheduledDate.toISOString();
+    }
+
+    onScheduleTask(trimmedTitle, scheduledAt);
 
     setTitle("");
     setSelectedDate(undefined);
     setSelectedHour("12");
     setSelectedMinute("00");
     setSelectedPeriod("PM");
+    setIsAllDay(false);
     setStep("date");
     setIsDialogOpen(false);
 
@@ -205,81 +213,109 @@ export function ScheduleTaskForm({ onScheduleTask, disabled = false }: ScheduleT
                 </p>
               </div>
 
-              {/* Time Picker */}
-              <div className="space-y-5">
-                {/* Hour Selection */}
-                <div>
-                  <label id="hour-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Hour</label>
-                  <div role="group" aria-labelledby="hour-label" className="grid grid-cols-6 gap-1.5">
-                    {hours.map((hour) => (
-                      <button
-                        key={hour}
-                        type="button"
-                        onClick={() => setSelectedHour(hour)}
-                        className={cn(
-                          "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
-                          selectedHour === hour
-                            ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                            : "bg-muted/40 hover:bg-muted text-foreground"
-                        )}
-                      >
-                        {hour}
-                      </button>
-                    ))}
+              {/* All Day Toggle */}
+              <div className="flex items-center justify-between rounded-xl border-2 border-border bg-muted/20 px-4 py-3">
+                <span className="text-sm font-semibold">All Day</span>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isAllDay}
+                  onClick={() => setIsAllDay(!isAllDay)}
+                  className={cn(
+                    "relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors duration-200",
+                    isAllDay ? "bg-violet-600" : "bg-muted"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200",
+                      isAllDay ? "translate-x-6" : "translate-x-1"
+                    )}
+                  />
+                </button>
+              </div>
+
+              {/* Time Picker — hidden when All Day is on */}
+              {!isAllDay && (
+                <div className="space-y-5">
+                  {/* Hour Selection */}
+                  <div>
+                    <label id="hour-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Hour</label>
+                    <div role="group" aria-labelledby="hour-label" className="grid grid-cols-6 gap-1.5">
+                      {hours.map((hour) => (
+                        <button
+                          key={hour}
+                          type="button"
+                          onClick={() => setSelectedHour(hour)}
+                          className={cn(
+                            "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
+                            selectedHour === hour
+                              ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
+                              : "bg-muted/40 hover:bg-muted text-foreground"
+                          )}
+                        >
+                          {hour}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Minute Selection */}
+                  <div>
+                    <label id="minute-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Minute</label>
+                    <div role="group" aria-labelledby="minute-label" className="grid grid-cols-4 gap-1.5">
+                      {minutes.map((minute) => (
+                        <button
+                          key={minute}
+                          type="button"
+                          onClick={() => setSelectedMinute(minute)}
+                          className={cn(
+                            "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
+                            selectedMinute === minute
+                              ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
+                              : "bg-muted/40 hover:bg-muted text-foreground"
+                          )}
+                        >
+                          :{minute}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* AM/PM Selection */}
+                  <div>
+                    <label id="period-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Period</label>
+                    <div role="group" aria-labelledby="period-label" className="grid grid-cols-2 gap-1.5">
+                      {(["AM", "PM"] as const).map((period) => (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => setSelectedPeriod(period)}
+                          className={cn(
+                            "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
+                            selectedPeriod === period
+                              ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
+                              : "bg-muted/40 hover:bg-muted text-foreground"
+                          )}
+                        >
+                          {period}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              )}
 
-                {/* Minute Selection */}
-                <div>
-                  <label id="minute-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Minute</label>
-                  <div role="group" aria-labelledby="minute-label" className="grid grid-cols-4 gap-1.5">
-                    {minutes.map((minute) => (
-                      <button
-                        key={minute}
-                        type="button"
-                        onClick={() => setSelectedMinute(minute)}
-                        className={cn(
-                          "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
-                          selectedMinute === minute
-                            ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                            : "bg-muted/40 hover:bg-muted text-foreground"
-                        )}
-                      >
-                        :{minute}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* AM/PM Selection */}
-                <div>
-                  <label id="period-label" className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-2 block">Period</label>
-                  <div role="group" aria-labelledby="period-label" className="grid grid-cols-2 gap-1.5">
-                    {(["AM", "PM"] as const).map((period) => (
-                      <button
-                        key={period}
-                        type="button"
-                        onClick={() => setSelectedPeriod(period)}
-                        className={cn(
-                          "min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-150",
-                          selectedPeriod === period
-                            ? "bg-violet-600 text-white shadow-md shadow-violet-600/20"
-                            : "bg-muted/40 hover:bg-muted text-foreground"
-                        )}
-                      >
-                        {period}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Time Preview */}
-                <div className="text-center pt-4 border-t border-border/50">
-                  <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Scheduled for</p>
+              {/* Preview */}
+              <div className="text-center pt-4 border-t border-border/50">
+                <p className="text-xs text-muted-foreground uppercase tracking-widest font-semibold">Scheduled for</p>
+                {isAllDay ? (
+                  <p className="font-display text-3xl text-violet-600 mt-1">All Day</p>
+                ) : (
                   <p className="font-display text-3xl text-violet-600 mt-1 tabular-nums">
                     {selectedHour}:{selectedMinute} {selectedPeriod}
                   </p>
-                </div>
+                )}
               </div>
 
               {/* Action Buttons */}

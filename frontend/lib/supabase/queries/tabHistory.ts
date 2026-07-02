@@ -63,6 +63,7 @@ export async function fetchTabHistory(): Promise<TabHistoryEntry[]> {
 /**
  * Fetch tab history entries from the last 6 months only.
  * Used by initial sync to cap what goes into localStorage.
+ * Limited to HISTORY_PAGE_SIZE rows to prevent unbounded memory growth.
  */
 export async function fetchRecentTabHistory(): Promise<TabHistoryEntry[]> {
   const supabase = getSupabaseClient();
@@ -72,7 +73,8 @@ export async function fetchRecentTabHistory(): Promise<TabHistoryEntry[]> {
     .from("tab_history")
     .select("*")
     .gte("created_at", sixMonthsAgo)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .limit(HISTORY_PAGE_SIZE);
 
   if (error) {
     console.error("Error fetching recent tab history:", error);

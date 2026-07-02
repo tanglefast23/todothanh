@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, memo } from "react";
 import { Check, X, FileText, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,64 @@ function ExpenseIconDisplay({ name }: { name: string }) {
   );
 }
 
+function ExpenseAttachmentThumb({ url }: { url: string }) {
+  const [imageError, setImageError] = useState(false);
+  const isPdf = url.toLowerCase().includes(".pdf");
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="group inline-block">
+      {isPdf || imageError ? (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors">
+          <FileText className="h-8 w-8 text-primary" />
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-primary">PDF Document</span>
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              Tap to view <ExternalLink className="h-3 w-3" />
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div className="relative overflow-hidden rounded-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
+          <img
+            src={url}
+            alt="Expense attachment"
+            className="w-20 h-20 object-cover group-hover:scale-105 transition-transform"
+            onError={() => setImageError(true)}
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+            <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
+        </div>
+      )}
+    </a>
+  );
+}
+
+function SmallAttachmentThumb({ url }: { url: string }) {
+  const [imageError, setImageError] = useState(false);
+  const isPdf = url.toLowerCase().includes(".pdf");
+  return (
+    <a href={url} target="_blank" rel="noopener noreferrer" className="group relative block" title="View attachment">
+      {isPdf || imageError ? (
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-400/50 hover:border-pink-400 transition-all">
+          <FileText className="h-4 w-4 text-pink-500" />
+        </div>
+      ) : (
+        <div className="relative h-9 w-9 overflow-hidden rounded-lg border border-pink-400/50 hover:border-pink-400 transition-all">
+          <img
+            src={url}
+            alt="Attachment"
+            className="h-full w-full object-cover group-hover:scale-105 transition-transform"
+            onError={() => setImageError(true)}
+          />
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
+            <ExternalLink className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
+          </div>
+        </div>
+      )}
+    </a>
+  );
+}
+
 const statusConfig: Record<
   ExpenseStatus,
   { label: string; variant: "default" | "secondary" | "destructive" | "outline"; className?: string }
@@ -85,7 +143,7 @@ const statusConfig: Record<
   },
 };
 
-export function ExpenseItem({
+export const ExpenseItem = memo(function ExpenseItem({
   expense,
   creatorName,
   approverName,
@@ -96,13 +154,9 @@ export function ExpenseItem({
   itemNumber,
   showNumber = false,
 }: ExpenseItemProps) {
-  const [imageError, setImageError] = useState(false);
   const config = statusConfig[expense.status];
   const isPending = expense.status === "pending";
   const numberColor = itemNumber ? NUMBER_COLORS[(itemNumber - 1) % NUMBER_COLORS.length] : NUMBER_COLORS[0];
-
-  // Check if attachment is a PDF
-  const isPdf = expense.attachmentUrl?.toLowerCase().includes(".pdf");
 
   // Get card style based on status
   const getCardStyle = () => {
@@ -171,83 +225,28 @@ export function ExpenseItem({
           </div>
         )}
 
-        {/* Attachment Thumbnail */}
-        {expense.attachmentUrl && (
-          <div className="mt-3">
-            <a
-              href={expense.attachmentUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-block"
-            >
-              {isPdf || imageError ? (
-                // PDF or failed image - show icon with link
-                <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 transition-colors">
-                  <FileText className="h-8 w-8 text-primary" />
-                  <div className="flex flex-col">
-                    <span className="text-sm font-medium text-primary">
-                      {isPdf ? "PDF Document" : "Attachment"}
-                    </span>
-                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                      Tap to view <ExternalLink className="h-3 w-3" />
-                    </span>
-                  </div>
-                </div>
-              ) : (
-                // Image - show thumbnail
-                <div className="relative overflow-hidden rounded-lg border-2 border-primary/20 hover:border-primary/40 transition-colors">
-                  <img
-                    src={expense.attachmentUrl}
-                    alt="Expense attachment"
-                    className="w-20 h-20 object-cover group-hover:scale-105 transition-transform"
-                    onError={() => setImageError(true)}
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                  </div>
-                </div>
-              )}
-            </a>
+        {/* Attachment Thumbnails */}
+        {expense.attachmentUrls.length > 0 && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            {expense.attachmentUrls.map((url, i) => (
+              <ExpenseAttachmentThumb key={i} url={url} />
+            ))}
           </div>
         )}
       </div>
 
       {/* Actions */}
       <div className="flex items-center gap-2 shrink-0">
-        {/* Attachment button or thumbnail - only for pending expenses */}
-        {isPending && !expense.attachmentUrl && (
+        {/* Attachment upload + thumbnails - only for pending expenses */}
+        {isPending && (
           <AttachmentUpload
             expenseId={expense.id}
             onUpload={(url) => onAttachment(expense.id, url)}
           />
         )}
-        {isPending && expense.attachmentUrl && (
-          <a
-            href={expense.attachmentUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative block"
-            title="View attachment"
-          >
-            {isPdf || imageError ? (
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-400/50 hover:border-pink-400 transition-all">
-                <FileText className="h-4 w-4 text-pink-500" />
-              </div>
-            ) : (
-              <div className="relative h-9 w-9 overflow-hidden rounded-lg border border-pink-400/50 hover:border-pink-400 transition-all">
-                <img
-                  src={expense.attachmentUrl}
-                  alt="Attachment"
-                  className="h-full w-full object-cover group-hover:scale-105 transition-transform"
-                  onError={() => setImageError(true)}
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center">
-                  <ExternalLink className="h-3 w-3 text-white opacity-0 group-hover:opacity-100 transition-opacity drop-shadow-lg" />
-                </div>
-              </div>
-            )}
-          </a>
-        )}
+        {isPending && expense.attachmentUrls.map((url, i) => (
+          <SmallAttachmentThumb key={i} url={url} />
+        ))}
 
         {/* Approve/Reject buttons - only for pending and authorized users */}
         {isPending && canApprove && (
@@ -275,4 +274,4 @@ export function ExpenseItem({
       </div>
     </div>
   );
-}
+});

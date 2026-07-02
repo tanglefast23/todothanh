@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Trash2, Plus, Check, X, ChevronDown } from "lucide-react";
 import { getExpenseIcon } from "@/lib/expenseIcons";
 import { Header } from "@/components/layout/Header";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useOwnerStore } from "@/stores/ownerStore";
-import { useRunningTabStore } from "@/stores/runningTabStore";
+import { useRunningTabStore, TOPUP_EXPENSE_NAME } from "@/stores/runningTabStore";
 import { usePermissionsStore } from "@/stores/permissionsStore";
 import { BalanceDisplay, formatVND } from "@/components/running-tab/BalanceDisplay";
 import { InitializeBalanceForm } from "@/components/running-tab/InitializeBalanceForm";
@@ -16,6 +16,7 @@ import { ExpenseShortcuts } from "@/components/running-tab/ExpenseShortcuts";
 import { ExpenseList } from "@/components/running-tab/ExpenseList";
 import { TabHistory } from "@/components/running-tab/TabHistory";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -164,38 +165,38 @@ export default function RunningTabPage() {
     return { totalAdded, totalSpent, expenseCount, monthLabel };
   }, [history]);
 
-  // Handlers
-  const handleInitialize = (amount: number) => {
+  // Handlers — wrapped in useCallback to prevent stale closures when passed as props
+  const handleInitialize = useCallback((amount: number) => {
     initializeBalance(amount, activeOwnerId);
-  };
+  }, [initializeBalance, activeOwnerId]);
 
-  const handleAddExpense = (name: string, amount: number) => {
+  const handleAddExpense = useCallback((name: string, amount: number) => {
     addExpense(name, amount, activeOwnerId);
-  };
+  }, [addExpense, activeOwnerId]);
 
-  const handleAddBulkExpenses = (entries: { name: string; amount: number }[]) => {
+  const handleAddBulkExpenses = useCallback((entries: { name: string; amount: number }[]) => {
     addBulkExpenses(entries, activeOwnerId);
-  };
+  }, [addBulkExpenses, activeOwnerId]);
 
-  const handleApprove = (id: string) => {
+  const handleApprove = useCallback((id: string) => {
     approveExpense(id, activeOwnerId);
-  };
+  }, [approveExpense, activeOwnerId]);
 
-  const handleApproveAll = () => {
+  const handleApproveAll = useCallback(() => {
     approveAllPendingExpenses(activeOwnerId);
-  };
+  }, [approveAllPendingExpenses, activeOwnerId]);
 
-  const handleRejectAll = (reason: string) => {
+  const handleRejectAll = useCallback((reason: string) => {
     rejectAllPendingExpenses(reason, activeOwnerId);
-  };
+  }, [rejectAllPendingExpenses, activeOwnerId]);
 
-  const handleReject = (id: string, reason: string) => {
+  const handleReject = useCallback((id: string, reason: string) => {
     rejectExpense(id, reason, activeOwnerId);
-  };
+  }, [rejectExpense, activeOwnerId]);
 
-  const handleAttachment = (expenseId: string, url: string) => {
+  const handleAttachment = useCallback((expenseId: string, url: string) => {
     setAttachment(expenseId, url);
-  };
+  }, [setAttachment]);
 
   const handleShortcutSelectExpense = (name: string, tab: "simple" | "bulk" = "simple") => {
     proxyFocusRef.current?.focus({ preventScroll: true });
@@ -245,9 +246,23 @@ export default function RunningTabPage() {
 
   if (!isMounted) {
     return (
-      <div className="flex min-h-screen items-center justify-center" role="status" aria-label="Loading">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-        <span className="sr-only">Loading...</span>
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 px-4 py-5 sm:px-6">
+          <div className="max-w-3xl mx-auto flex flex-col gap-7">
+            <Skeleton className="h-40 w-full rounded-3xl" />
+            <div className="flex gap-2">
+              <Skeleton className="h-10 w-24 rounded-full" />
+              <Skeleton className="h-10 w-24 rounded-full" />
+              <Skeleton className="h-10 w-20 rounded-full" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-20 w-full rounded-2xl" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
+              <Skeleton className="h-20 w-full rounded-2xl" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }
@@ -368,13 +383,22 @@ export default function RunningTabPage() {
                 onCancel={deleteExpense}
               />
 
-              {/* Recent Activity */}
-              {history.length > 0 && (
+              {/* Recent Activity — skeleton while cloud history is loading */}
+              {history.length > 0 ? (
                 <RecentActivitySection
                   entries={history}
                   expanded={activityExpanded}
                   onToggle={() => setActivityExpanded(!activityExpanded)}
                 />
+              ) : (
+                <section className="flex flex-col gap-3.5">
+                  <h3 className="text-lg font-bold tracking-tight text-foreground">Recent Activity</h3>
+                  <div className="flex flex-col gap-2 rounded-[20px] bg-[#F6F7F8] p-4">
+                    <Skeleton className="h-12 w-full rounded-xl" />
+                    <Skeleton className="h-12 w-full rounded-xl" />
+                    <Skeleton className="h-12 w-3/4 rounded-xl" />
+                  </div>
+                </section>
               )}
 
               {/* Monthly Summary */}
@@ -495,7 +519,7 @@ export default function RunningTabPage() {
               type="button"
               className="bg-emerald-600 hover:bg-emerald-700"
               onClick={() => {
-                addExpense("Kia Top Up", 5000000, activeOwnerId);
+                addExpense(TOPUP_EXPENSE_NAME, 5000000, activeOwnerId);
                 setTopUpConfirmOpen(false);
               }}
             >
@@ -547,7 +571,7 @@ export default function RunningTabPage() {
               className="bg-emerald-600 hover:bg-emerald-700"
               disabled={!customTopUpAmount || Number(customTopUpAmount) <= 0 || Number(customTopUpAmount) > MAX_VND_AMOUNT}
               onClick={() => {
-                addExpense("Kia Top Up", Number(customTopUpAmount), activeOwnerId);
+                addExpense(TOPUP_EXPENSE_NAME, Number(customTopUpAmount), activeOwnerId);
                 setCustomTopUpOpen(false);
                 setCustomTopUpAmount("");
               }}

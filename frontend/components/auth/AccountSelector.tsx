@@ -17,35 +17,7 @@ import { playSelectionChime, playLoginSuccess, playCancelSound } from "@/lib/aud
 import { useOwnerStore } from "@/stores/ownerStore";
 import type { Owner } from "@/types/owner";
 import { Logo } from "@/components/layout/Logo";
-
-// Profile pictures for known users (case-insensitive match)
-const PROFILE_PICTURES: Record<string, string> = {
-  joe: "/joe.png",
-  cliff: "/cliff.png",
-  foad: "/foad.png",
-  ivy: "/ivy.png",
-  leonard: "/leonard.png",
-  thanh: "/thanh.png",
-};
-
-// Get profile picture path for a name, or null if not found
-function getProfilePicture(name: string | undefined | null): string | null {
-  if (!name || typeof name !== "string") return null;
-  const normalizedName = name.toLowerCase().trim();
-  return PROFILE_PICTURES[normalizedName] || null;
-}
-
-// Color palette for account avatars (used as fallback)
-const AVATAR_COLORS = [
-  { bg: "bg-violet-500", ring: "ring-violet-400" },
-  { bg: "bg-emerald-500", ring: "ring-emerald-400" },
-  { bg: "bg-amber-500", ring: "ring-amber-400" },
-  { bg: "bg-rose-500", ring: "ring-rose-400" },
-  { bg: "bg-cyan-500", ring: "ring-cyan-400" },
-  { bg: "bg-fuchsia-500", ring: "ring-fuchsia-400" },
-  { bg: "bg-lime-500", ring: "ring-lime-400" },
-  { bg: "bg-orange-500", ring: "ring-orange-400" },
-];
+import { AVATAR_COLORS, PROFILE_PICTURES, getProfilePicture } from "@/lib/colors";
 
 interface AccountSelectorProps {
   onLoginSuccess: () => void;

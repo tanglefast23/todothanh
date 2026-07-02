@@ -24,6 +24,10 @@ import { deleteAttachments } from "@/lib/supabase/queries/storage";
 import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 
 const RUNNING_TAB_STORAGE_KEY = "running-tab-storage";
+const MAX_SEARCHED_MONTHS = 12;
+
+/** Expense name that triggers a balance top-up rather than a deduction. */
+export const TOPUP_EXPENSE_NAME = "Kia Top Up";
 
 function generateId(): string {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
@@ -94,9 +98,16 @@ export const useRunningTabStore = create<RunningTabState>()(
       setHistory: (history) => set({ history }),
 
       setSearchedMonth: (key, entries) =>
-        set((state) => ({
-          searchedHistory: { ...state.searchedHistory, [key]: entries },
-        })),
+        set((state) => {
+          const next = { ...state.searchedHistory, [key]: entries };
+          // Evict the oldest month(s) when the cap is exceeded so localStorage
+          // doesn't grow unboundedly as users search more and more past months.
+          const keys = Object.keys(next).sort(); // ascending = oldest first
+          while (keys.length > MAX_SEARCHED_MONTHS) {
+            delete next[keys.shift()!];
+          }
+          return { searchedHistory: next };
+        }),
       removeSearchedMonth: (key) =>
         set((state) => {
           const next = { ...state.searchedHistory };
@@ -227,7 +238,7 @@ export const useRunningTabStore = create<RunningTabState>()(
           approvedBy: null,
           approvedAt: null,
           status: "pending",
-          attachmentUrl: null,
+          attachmentUrls: [],
           rejectionReason: null,
           updatedAt: now,
         };
@@ -255,7 +266,7 @@ export const useRunningTabStore = create<RunningTabState>()(
           approvedBy: null,
           approvedAt: null,
           status: "pending" as ExpenseStatus,
-          attachmentUrl: null,
+          attachmentUrls: [],
           rejectionReason: null,
           updatedAt: now,
         }));
@@ -281,7 +292,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const historyId = generateId();
 
         // Check if this is a top-up (adds money) vs expense (subtracts money)
-        const isTopUp = expense.name === "Kia Top Up";
+        const isTopUp = expense.name === TOPUP_EXPENSE_NAME;
         const balanceChange = isTopUp ? expense.amount : -expense.amount;
         const newBalance = (currentTab?.currentBalance ?? 0) + balanceChange;
 
@@ -316,25 +327,34 @@ export const useRunningTabStore = create<RunningTabState>()(
           history: [historyEntry, ...state.history],
         }));
 
-        // Sync individual changes to Supabase with retry
-        retryWithBackoff(
-          () => updateExpense(id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
-          3, "approveExpense"
-        ).catch((error) => {
-          console.error("[Store] Failed to sync expense approval to Supabase after retries:", error);
-        });
+        // Capture pre-change state for rollback if primary sync fails
+        const savedExpenses = get().expenses;
+        const savedTab = get().tab;
+        const savedHistory = get().history;
 
-        if (currentTab) {
-          retryWithBackoff(
-            () => updateTabBalance(currentTab.id, newBalance), 3, "approveExpense:balance"
-          ).catch((error) => {
-            console.error("[Store] Failed to sync tab balance to Supabase after retries:", error);
-          });
-        }
+        // Sync sequentially: if the expense update fails, rollback local state.
+        // Balance and history sync failures are logged but don't roll back
+        // (they are idempotent and will be retried on next app load).
+        (async () => {
+          const expenseResult = await retryWithBackoff(
+            () => updateExpense(id, { status: "approved", approvedBy, approvedAt: now, updatedAt: now }),
+            3, "approveExpense"
+          );
 
-        retryWithBackoff(() => upsertHistory([historyEntry]), 3, "approveExpense:history").catch((error) => {
-          console.error("[Store] Failed to sync history entry to Supabase after retries:", error);
-        });
+          if (expenseResult === undefined) {
+            console.error("[Store] approveExpense: primary sync failed, rolling back local state");
+            set({ expenses: savedExpenses, tab: savedTab, history: savedHistory });
+            return;
+          }
+
+          if (currentTab) {
+            await retryWithBackoff(
+              () => updateTabBalance(currentTab.id, newBalance), 3, "approveExpense:balance"
+            );
+          }
+
+          await retryWithBackoff(() => upsertHistory([historyEntry]), 3, "approveExpense:history");
+        })();
       },
 
       approveAllPendingExpenses: (approvedBy) => {
@@ -350,7 +370,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const newHistoryEntries: TabHistoryEntry[] = [];
 
         for (const expense of pendingExpenses) {
-          const isTopUp = expense.name === "Kia Top Up";
+          const isTopUp = expense.name === TOPUP_EXPENSE_NAME;
           const balanceChange = isTopUp ? expense.amount : -expense.amount;
           runningBalance += balanceChange;
 
@@ -508,21 +528,18 @@ export const useRunningTabStore = create<RunningTabState>()(
 
       setAttachment: (expenseId, url) => {
         const now = new Date().toISOString();
+        let updatedUrls: string[] = [];
         set((state) => ({
-          expenses: state.expenses.map((e) =>
-            e.id === expenseId
-              ? {
-                  ...e,
-                  attachmentUrl: url,
-                  updatedAt: now,
-                }
-              : e
-          ),
+          expenses: state.expenses.map((e) => {
+            if (e.id !== expenseId) return e;
+            updatedUrls = [...e.attachmentUrls, url];
+            return { ...e, attachmentUrls: updatedUrls, updatedAt: now };
+          }),
         }));
 
         // Sync to Supabase with retry
         retryWithBackoff(
-          () => updateExpense(expenseId, { attachmentUrl: url, updatedAt: now }),
+          () => updateExpense(expenseId, { attachmentUrls: updatedUrls, updatedAt: now }),
           3, "setAttachment"
         ).catch((error) => {
           console.error("[Store] Failed to sync attachment to Supabase after retries:", error);
@@ -534,9 +551,9 @@ export const useRunningTabStore = create<RunningTabState>()(
         // Only allow deletion of pending or rejected expenses
         if (!expense || expense.status === "approved") return;
 
-        // Clean up attachment from Supabase Storage
-        if (expense.attachmentUrl) {
-          deleteAttachments([expense.attachmentUrl]).catch((error) => {
+        // Clean up attachments from Supabase Storage
+        if (expense.attachmentUrls.length > 0) {
+          deleteAttachments(expense.attachmentUrls).catch((error) => {
             console.error("[Store] Failed to delete attachment from Storage:", error);
           });
         }
@@ -556,9 +573,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         const completedExpenses = get().expenses.filter(
           (e) => e.status === "approved" || e.status === "rejected"
         );
-        const attachmentUrls = completedExpenses
-          .map((e) => e.attachmentUrl)
-          .filter((url): url is string => url !== null && url.length > 0);
+        const attachmentUrls = completedExpenses.flatMap((e) => e.attachmentUrls);
 
         // Keep only pending expenses, remove approved and rejected
         set((state) => ({
@@ -593,9 +608,7 @@ export const useRunningTabStore = create<RunningTabState>()(
         if (expired.length === 0) return;
 
         // Collect attachment URLs before removing
-        const attachmentUrls = expired
-          .map((e) => e.attachmentUrl)
-          .filter((url): url is string => url !== null && url.length > 0);
+        const attachmentUrls = expired.flatMap((e) => e.attachmentUrls);
 
         const expiredIds = new Set(expired.map((e) => e.id));
 

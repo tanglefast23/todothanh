@@ -6,6 +6,7 @@ import { ScheduledEventList } from "@/components/calendar/ScheduledEventList";
 import { useAuthGuard } from "@/hooks/useAuthGuard";
 import { useScheduledEventsStore } from "@/stores/scheduledEventsStore";
 import { useOwnerStore } from "@/stores/ownerStore";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CalendarPage() {
   // Redirect to login if not authenticated
@@ -54,11 +55,23 @@ export default function CalendarPage() {
     deleteEvent(id);
   }, [deleteEvent]);
 
-  // Show loading state while checking authentication
   if (isAuthLoading || !isAuthenticated) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 p-6">
+          <div className="max-w-3xl mx-auto space-y-6">
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-36" />
+              <Skeleton className="h-4 w-44" />
+            </div>
+            <div className="flex flex-col gap-3">
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+              <Skeleton className="h-16 w-full rounded-2xl" />
+            </div>
+          </div>
+        </main>
       </div>
     );
   }

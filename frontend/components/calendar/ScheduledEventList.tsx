@@ -36,12 +36,20 @@ function getDayTitle(date: Date): string {
   return format(date, "EEEE, MMMM d");
 }
 
+function parseEventDate(dateStr: string): Date {
+  if (!dateStr.includes("T")) {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+  return new Date(dateStr);
+}
+
 function groupEventsByDay(events: ScheduledEvent[], dateField: "scheduledAt" | "completedAt"): EventsByDay[] {
   const groups = new Map<string, ScheduledEvent[]>();
 
   events.forEach((event) => {
     const dateValue = dateField === "completedAt" ? event.completedAt || event.scheduledAt : event.scheduledAt;
-    const date = new Date(dateValue);
+    const date = parseEventDate(dateValue);
     const dateKey = startOfDay(date).toISOString();
 
     if (!groups.has(dateKey)) {
@@ -71,11 +79,11 @@ export function ScheduledEventList({
   const { pendingByDay, completedByDay } = useMemo(() => {
     const pending = events
       .filter((e) => e.status === "pending")
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime());
+      .sort((a, b) => parseEventDate(a.scheduledAt).getTime() - parseEventDate(b.scheduledAt).getTime());
 
     const completed = events
       .filter((e) => e.status === "completed")
-      .sort((a, b) => new Date(b.completedAt || b.scheduledAt).getTime() - new Date(a.completedAt || a.scheduledAt).getTime());
+      .sort((a, b) => parseEventDate(b.completedAt || b.scheduledAt).getTime() - parseEventDate(a.completedAt || a.scheduledAt).getTime());
 
     return {
       pendingByDay: groupEventsByDay(pending, "scheduledAt"),
