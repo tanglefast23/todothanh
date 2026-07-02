@@ -20,11 +20,13 @@ import { AttachmentUpload } from "./AttachmentUpload";
 interface PendingApprovalProps {
   expenses: ExpenseWithOwner[];
   canApprove: boolean;
+  activeOwnerId?: string | null;
   onApprove: (id: string) => void;
   onApproveAll?: () => void;
   onReject: (id: string) => void;
   onRejectAll?: () => void;
   onAttachment: (id: string, url: string) => void;
+  onCancel?: (id: string) => void;
 }
 
 // --- Component ---
@@ -32,11 +34,13 @@ interface PendingApprovalProps {
 export function PendingApproval({
   expenses,
   canApprove,
+  activeOwnerId,
   onApprove,
   onApproveAll,
   onReject,
   onRejectAll,
   onAttachment,
+  onCancel,
 }: PendingApprovalProps) {
   if (expenses.length === 0) return null;
 
@@ -62,9 +66,11 @@ export function PendingApproval({
             key={expense.id}
             expense={expense}
             canApprove={canApprove}
+            canCancel={!!onCancel && !!activeOwnerId && expense.createdBy === activeOwnerId}
             onApprove={onApprove}
             onReject={onReject}
             onAttachment={onAttachment}
+            onCancel={onCancel}
           />
         ))}
       </div>
@@ -101,17 +107,21 @@ export function PendingApproval({
 interface PendingExpenseCardProps {
   expense: ExpenseWithOwner;
   canApprove: boolean;
+  canCancel?: boolean;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
   onAttachment: (id: string, url: string) => void;
+  onCancel?: (id: string) => void;
 }
 
 function PendingExpenseCard({
   expense,
   canApprove,
+  canCancel,
   onApprove,
   onReject,
   onAttachment,
+  onCancel,
 }: PendingExpenseCardProps) {
   const [imageError, setImageError] = useState(false);
   const { Icon, color, bg } = getExpenseIcon(expense.name);
@@ -184,7 +194,7 @@ function PendingExpenseCard({
           <>
             <button
               onClick={() => onReject(expense.id)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-500 transition-transform active:scale-[0.97]"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-600 transition-transform active:scale-[0.97]"
             >
               <X className="size-3.5" />
               Reject
@@ -192,12 +202,23 @@ function PendingExpenseCard({
 
             <button
               onClick={() => onApprove(expense.id)}
-              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#F0FDF4] h-[38px] text-[13px] font-semibold text-emerald-500 transition-transform active:scale-[0.97]"
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#F0FDF4] h-[38px] text-[13px] font-semibold text-emerald-700 transition-transform active:scale-[0.97]"
             >
               <Check className="size-3.5" />
               Approve
             </button>
           </>
+        )}
+
+        {/* Cancel — for the creator of a still-pending request (non-approvers) */}
+        {canCancel && !canApprove && onCancel && (
+          <button
+            onClick={() => onCancel(expense.id)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-[#FFF5F5] h-[38px] text-[13px] font-semibold text-red-600 transition-transform active:scale-[0.97]"
+          >
+            <X className="size-3.5" />
+            Cancel
+          </button>
         )}
       </div>
     </div>

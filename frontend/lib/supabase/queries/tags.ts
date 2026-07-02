@@ -71,31 +71,20 @@ export async function deleteTag(id: string): Promise<void> {
   }
 }
 
-// Bulk sync: replace all non-default tags
+// Bulk sync: upsert custom tags (NON-destructive, by id).
+// Previously delete-all-non-default-then-reinsert, which ran on every focus
+// refresh via the echo-push loop. Deletions are handled per-row via deleteTag().
 export async function syncTags(tags: TagInsert[]): Promise<void> {
-  const supabase = getSupabaseClient();
-
-  // Delete all non-default tags
-  const { error: deleteError } = await supabase
-    .from("tags")
-    .delete()
-    .eq("is_default", false);
-
-  if (deleteError) {
-    console.error("Error deleting tags:", deleteError);
-    throw deleteError;
-  }
-
-  // Insert custom tags if any exist
   const customTags = tags.filter((t) => !t.is_default);
-  if (customTags.length > 0) {
-    const { error: insertError } = await supabase
-      .from("tags")
-      .insert(customTags as never);
+  if (customTags.length === 0) return;
 
-    if (insertError) {
-      console.error("Error inserting tags:", insertError);
-      throw insertError;
-    }
+  const supabase = getSupabaseClient();
+  const { error } = await supabase
+    .from("tags")
+    .upsert(customTags as never, { onConflict: "id" });
+
+  if (error) {
+    console.error("Error upserting tags:", error);
+    throw error;
   }
 }

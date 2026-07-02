@@ -80,7 +80,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               hasContent
-                ? "bg-[#22C55E] text-white shadow-md hover:bg-[#16A34A] active:scale-[0.97]"
+                ? "bg-[#15803D] text-white shadow-md hover:bg-[#166534] active:scale-[0.97]"
                 : "bg-muted/40 text-muted-foreground/30"
             )}
           >
@@ -95,7 +95,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
               hasContent
-                ? "bg-[#F97316] text-white shadow-md hover:bg-[#EA580C] active:scale-[0.97]"
+                ? "bg-[#C2410C] text-white shadow-md hover:bg-[#9A3412] active:scale-[0.97]"
                 : "bg-muted/40 text-muted-foreground/30"
             )}
           >
@@ -127,7 +127,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasContent
-                ? "bg-[#22C55E] text-white shadow-md active:scale-[0.97]"
+                ? "bg-[#15803D] text-white shadow-md active:scale-[0.97]"
                 : "bg-muted/40 text-muted-foreground/30"
             )}
           >
@@ -142,7 +142,7 @@ export function AddTaskForm({ onAddTask, disabled = false }: AddTaskFormProps) {
               "flex items-center justify-center gap-2 h-12 rounded-[14px] text-[15px] font-bold transition-all duration-200",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
               hasContent
-                ? "bg-[#F97316] text-white shadow-md active:scale-[0.97]"
+                ? "bg-[#C2410C] text-white shadow-md active:scale-[0.97]"
                 : "bg-muted/40 text-muted-foreground/30"
             )}
           >

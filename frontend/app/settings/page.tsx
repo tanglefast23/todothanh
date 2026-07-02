@@ -199,21 +199,23 @@ export default function SettingsPage() {
         {/* Owner Profiles - Master Only */}
         {showOwnerManagement && <OwnerManagement />}
 
-        {/* Danger Zone */}
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>
-              Irreversible actions - proceed with caution
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="destructive" onClick={handleClearAllData} disabled={isClearing}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              {isClearing ? "Clearing..." : "Clear All Data"}
-            </Button>
-          </CardContent>
-        </Card>
+        {/* Danger Zone - master only */}
+        {showOwnerManagement && (
+          <Card className="border-destructive">
+            <CardHeader>
+              <CardTitle className="text-destructive">Danger Zone</CardTitle>
+              <CardDescription>
+                Resets this device&apos;s local data, then re-downloads from the cloud.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="destructive" onClick={handleClearAllData} disabled={isClearing}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                {isClearing ? "Clearing..." : "Clear Local Data"}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <ConfirmDialog

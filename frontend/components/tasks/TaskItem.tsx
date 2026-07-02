@@ -95,7 +95,7 @@ export function TaskItem({
         <button
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(task.id);
+            setShowDeleteConfirm(true);
           }}
           onTouchStart={(e) => e.stopPropagation()}
           onMouseDown={(e) => e.stopPropagation()}

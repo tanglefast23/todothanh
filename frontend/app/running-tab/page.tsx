@@ -30,6 +30,10 @@ import { formatRelativeTime } from "@/lib/formatters";
 import { haptic } from "@/lib/audio";
 import type { TabHistoryEntry, TabHistoryType } from "@/types/runningTab";
 
+// Max amount that fits the running_tab / expenses NUMERIC(15,0) columns.
+// Guards against a silent cloud-write failure (and balance drift) on overflow.
+const MAX_VND_AMOUNT = 999_999_999_999;
+
 // History type config for Recent Activity icons
 const historyIconConfig: Record<TabHistoryType, { bg: string; color: string; icon: "check" | "plus" | "x" | "minus" | "settings" }> = {
   initial: { bg: "bg-blue-50", color: "text-blue-500", icon: "plus" },
@@ -89,6 +93,7 @@ export default function RunningTabPage() {
   const rejectAllPendingExpenses = useRunningTabStore((state) => state.rejectAllPendingExpenses);
   const rejectExpense = useRunningTabStore((state) => state.rejectExpense);
   const setAttachment = useRunningTabStore((state) => state.setAttachment);
+  const deleteExpense = useRunningTabStore((state) => state.deleteExpense);
   const clearCompletedExpenses = useRunningTabStore((state) => state.clearCompletedExpenses);
   const autoCleanExpiredExpenses = useRunningTabStore((state) => state.autoCleanExpiredExpenses);
 
@@ -309,14 +314,14 @@ export default function RunningTabPage() {
                   className="flex items-center justify-center gap-1 px-3 h-10 rounded-[20px] bg-[#D4F5E2] text-[#15803D] text-[12px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-lg font-black leading-none">+</span>
-                  Xx
+                  Custom
                 </button>
 
                 {/* Single expense button */}
                 <button
                   type="button"
                   onClick={() => { haptic(); addExpenseRef.current?.openWithTab("simple"); }}
-                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#E03E3E] text-[13px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-2xl font-black leading-none">+</span>
                   Single
@@ -326,7 +331,7 @@ export default function RunningTabPage() {
                 <button
                   type="button"
                   onClick={() => { haptic(); addExpenseRef.current?.openWithTab("bulk"); }}
-                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#FF6B6B] text-[13px] font-bold transition-transform active:scale-95"
+                  className="flex items-center justify-center gap-1.5 px-[18px] h-10 rounded-[20px] bg-white text-[#E03E3E] text-[13px] font-bold transition-transform active:scale-95"
                 >
                   <span className="text-2xl font-black leading-none">+</span>
                   Bulk
@@ -354,11 +359,13 @@ export default function RunningTabPage() {
                 expenses={expenses}
                 owners={ownerList}
                 canApprove={userCanApprove}
+                activeOwnerId={activeOwnerId}
                 onApprove={handleApprove}
                 onApproveAll={userCanApprove ? handleApproveAll : undefined}
                 onReject={handleReject}
                 onRejectAll={userCanApprove ? handleRejectAll : undefined}
                 onAttachment={handleAttachment}
+                onCancel={deleteExpense}
               />
 
               {/* Recent Activity */}
@@ -482,7 +489,7 @@ export default function RunningTabPage() {
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setTopUpConfirmOpen(false)}>
-              No
+              Cancel
             </Button>
             <Button
               type="button"
@@ -492,7 +499,7 @@ export default function RunningTabPage() {
                 setTopUpConfirmOpen(false);
               }}
             >
-              Yes
+              Request 5.000.000 ₫
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -519,10 +526,13 @@ export default function RunningTabPage() {
               onChange={(e) => setCustomTopUpAmount(e.target.value)}
               autoFocus
             />
-            {customTopUpAmount && Number(customTopUpAmount) > 0 && (
+            {customTopUpAmount && Number(customTopUpAmount) > 0 && Number(customTopUpAmount) <= MAX_VND_AMOUNT && (
               <p className="text-sm text-muted-foreground mt-2">
-                +{formatVND(Number(customTopUpAmount))} ₫
+                +{formatVND(Number(customTopUpAmount))}
               </p>
+            )}
+            {customTopUpAmount && Number(customTopUpAmount) > MAX_VND_AMOUNT && (
+              <p className="text-sm text-red-500 mt-2">Amount is too large.</p>
             )}
           </div>
           <DialogFooter>
@@ -535,7 +545,7 @@ export default function RunningTabPage() {
             <Button
               type="button"
               className="bg-emerald-600 hover:bg-emerald-700"
-              disabled={!customTopUpAmount || Number(customTopUpAmount) <= 0}
+              disabled={!customTopUpAmount || Number(customTopUpAmount) <= 0 || Number(customTopUpAmount) > MAX_VND_AMOUNT}
               onClick={() => {
                 addExpense("Kia Top Up", Number(customTopUpAmount), activeOwnerId);
                 setCustomTopUpOpen(false);

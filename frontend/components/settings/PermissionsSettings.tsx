@@ -247,6 +247,7 @@ export function PermissionsSettings() {
                         id={`approve-${owner.id}`}
                         checked={userPerms?.canApproveExpenses ?? false}
                         onCheckedChange={(checked) => setCanApproveExpenses(owner.id, checked)}
+                        disabled={!isAdmin}
                       />
                     </div>
                   </>

@@ -1,81 +1,94 @@
-# Investment Tracker
+# Thanh To Do
 
-A personal investment portfolio tracker with real-time market data, allocation planning, and multi-account support.
+A shared household task and petty-cash app for a boss and their staff (driver,
+house cleaner, cook, errands). Staff add tasks and request expenses; the boss
+(a "master" account) approves or rejects expenses against a shared running
+balance in Vietnamese đồng (VND). Mobile-first (installable iPhone PWA), with a
+desktop web layout as well.
+
+> This repo was originally an investment-portfolio tracker and was repurposed
+> into this todo/petty-cash app. Some vestigial code from the old app may still
+> be present — see the audit notes and dead-code inventory before relying on a
+> file.
 
 ## Features
 
-### Portfolio Management
-- **Multi-Account Support** - Track investments across TFSA, RRSP, margin, and other account types
-- **Multi-Portfolio** - Create and switch between different portfolios
-- **Transaction History** - Record buys, sells, and track your investment journey
-
-### Real-Time Market Data
-- **Live Stock Quotes** - Real-time prices via Yahoo Finance API
-- **Cryptocurrency Support** - Track BTC, ETH, SOL, and other major cryptocurrencies
-- **Price Charts** - Interactive charts powered by TradingView's Lightweight Charts
-
-### Allocation Overview
-- **Holdings Grid** - See all holdings across all accounts in one view
-- **Allocation Breakdown** - Current portfolio allocation percentages
-- **Historical Tracking** - Compare allocations to 5 and 15 sessions ago
-- **Account Values** - Total value per account with profit/loss
-
-### Sell Planning
-- **Percentage-Based Sells** - Plan sells as a percentage of your portfolio
-- **Per-Account Allocation** - Specify how many shares to sell from each account
-- **Buy Allocation** - Plan what to buy with proceeds, per account
-- **Order Tracking** - "Upcoming Orders" section to track planned sells and buys
-- **Completion Tracking** - Mark orders as done and track progress
-
-### User Experience
-- **Dark Theme** - Easy on the eyes for market watching
-- **Keyboard Shortcuts** - Press "S" to start a new sell plan
-- **Local Storage** - All data stored locally in your browser
-- **Responsive Design** - Works on desktop and mobile
+- **Accounts** — One master (boss) account protected by a PIN, plus passwordless
+  staff accounts. Pick your face on the login screen to sign in.
+- **Tasks** — Anyone can add Normal or Urgent tasks (Entry tab) and mark them
+  complete (Tasks tab). Masters can remove completed tasks.
+- **Running Tab (petty cash)** — Master initializes a starting balance. Staff
+  request expenses (free-form, quick-add shortcuts, OT, cooking) and top-ups.
+  The master approves/rejects; approvals adjust the balance and write an audit
+  entry.
+- **Calendar** — Schedule and track dated events.
+- **History** — Recent activity, monthly summary, and cloud-backed search of any
+  past month.
+- **Attachments** — Photo/PDF receipts on expenses and tasks.
+- **Sync** — Local-first (Zustand + localStorage) with Supabase as the shared
+  cloud store; data refreshes across devices when the app regains focus.
 
 ## Tech Stack
 
-### Frontend
-- **Next.js 16** - React framework with App Router
-- **React 19** - Latest React with concurrent features
-- **TypeScript** - Type-safe development
-- **Tailwind CSS 4** - Utility-first styling
-- **Zustand** - Lightweight state management with persistence
-- **TanStack Query** - Server state management and caching
-- **Radix UI** - Accessible component primitives
-- **Recharts** - Data visualization
-- **Lightweight Charts** - TradingView charting library
-
-### Backend
-- **FastAPI** - Python web framework
-- **Yahoo Finance API** - Market data provider
+- **Next.js 16** (App Router) + **React 19** + **TypeScript** (strict)
+- **Tailwind CSS 4** + **shadcn/ui** (Radix primitives), **lucide-react** icons
+- **Zustand** (persisted stores) for state, custom sync layer to **Supabase**
+- **bcryptjs** for master PIN hashing
+- Deployed on **Railway** (`railway.toml`, health check at `/api/health`)
 
 ## Getting Started
 
-### Prerequisites
-- Node.js 18+
-- Python 3.11+
-
-### Frontend Setup
 ```bash
 cd frontend
-npm install
-npm run dev
+pnpm install
+pnpm dev            # http://localhost:3000
 ```
 
-### Backend Setup
+Create `frontend/.env.local`:
+
 ```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+NEXT_PUBLIC_SUPABASE_URL=https://<project>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<anon-key>
 ```
 
-The app will be available at `http://localhost:3000`
+Database migrations live in `frontend/lib/supabase/migrations/` (`002`–`009`);
+run them in order in the Supabase SQL editor. A Storage bucket named
+`attachments` is required for receipts.
 
-## Screenshots
+## Commands
 
-*Coming soon*
+```bash
+pnpm dev            # dev server
+pnpm build          # production build
+pnpm start          # serve the production build
+pnpm lint           # ESLint
+pnpm test           # Jest unit tests
+npx tsc --noEmit    # type check
+```
 
-## License
+## Project Structure
 
-Private project - All rights reserved
+```
+frontend/
+├── app/                    # App Router pages
+│   ├── page.tsx            # login / account picker
+│   ├── entry/              # add tasks & schedule events
+│   ├── tasks/              # task list (post-login landing)
+│   ├── calendar/           # scheduled events
+│   ├── running-tab/        # petty-cash balance, expenses, approvals, history
+│   ├── settings/           # accounts, permissions, data export
+│   └── api/health/         # Railway health check
+├── components/             # UI (running-tab, tasks, calendar, layout, ui/)
+├── stores/                 # Zustand stores (owners, tasks, runningTab, …)
+├── lib/supabase/           # client, queries/, sync/, migrations/
+└── hooks/                  # auth guard, mobile mode, sync
+```
+
+## Security note
+
+There is no server-side authentication: the master PIN is verified in the
+browser and Supabase Row Level Security is currently permissive (household trust
+model). The Supabase anon key can read/write app tables. Do not store data here
+that must be protected from anyone with the app URL. Hardening (server-side auth,
+RLS, private receipt storage) is tracked in the audit notes.
+```

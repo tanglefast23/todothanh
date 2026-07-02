@@ -30,7 +30,10 @@ export function MobileAwareLayout({ children }: MobileAwareLayoutProps) {
   if (isMobile) {
     return (
       <div className="flex min-h-screen flex-col">
-        <main id="main-content" className="flex-1 min-w-0 pb-20">
+        <main
+          id="main-content"
+          className="flex-1 min-w-0 pb-[calc(5rem+env(safe-area-inset-bottom))]"
+        >
           {children}
         </main>
         <MobileBottomNav />

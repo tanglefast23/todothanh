@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MobileToggle } from "@/components/ui/mobile-toggle";
 import { useOwnerStore } from "@/stores/ownerStore";
+import { useRunningTabStore } from "@/stores/runningTabStore";
 import { useShallow } from "zustand/react/shallow";
 import { Logo } from "./Logo";
 import { cn } from "@/lib/utils";
@@ -73,6 +74,10 @@ export function Header() {
     }))
   );
 
+  const pendingCount = useRunningTabStore(
+    (state) => state.expenses.filter((e) => e.status === "pending").length
+  );
+
   // Hydration-safe
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -121,7 +126,7 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-background/95 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-30 flex min-h-16 items-center justify-between border-b bg-background/95 px-6 pt-[env(safe-area-inset-top)] backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* Left: Spacer for balance */}
       <div className="flex-1" />
 
@@ -132,6 +137,7 @@ export function Header() {
         </Link>
         {navItems.map((item) => {
             const isActive = pathname === item.href;
+            const showBadge = isMounted && item.href === "/running-tab" && pendingCount > 0;
             return (
               <Link
                 key={item.href}
@@ -142,9 +148,15 @@ export function Header() {
                     ? "bg-orange-500/15 text-orange-600 border border-orange-400/30"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 )}
+                aria-label={showBadge ? `${item.title}, ${pendingCount} pending` : undefined}
               >
                 <item.icon className="h-4 w-4" />
                 <span>{item.title}</span>
+                {showBadge && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 text-xs font-bold leading-none text-white">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -233,10 +245,10 @@ export function Header() {
                   </div>
                   <p className="text-xs text-muted-foreground">
                     {isGuestUser
-                      ? "Viewing public portfolios"
+                      ? "Guest access"
                       : activeOwner?.isMaster
-                        ? "Master account - full access"
-                        : "Personal portfolios"}
+                        ? "Master account - can approve expenses"
+                        : "Staff account"}
                   </p>
                 </div>
               </DropdownMenuLabel>

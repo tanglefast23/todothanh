@@ -73,8 +73,8 @@ export function ExpenseShortcuts({ onSelectExpense, onDirectExpense }: ExpenseSh
 
   const handleOTCustomSubmit = () => {
     const num = Number(customHours);
-    if (!customHours || isNaN(num) || num <= 0) {
-      setCustomHoursError("Numbers only");
+    if (!customHours || !Number.isInteger(num) || num <= 0 || num > 24) {
+      setCustomHoursError("1-24 hours");
       return;
     }
     handleOTSelect(num);
