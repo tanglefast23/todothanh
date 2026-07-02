@@ -72,30 +72,25 @@ export async function deleteOwner(id: string): Promise<void> {
   }
 }
 
-// Bulk sync: replace all todo_owners in database
+// Bulk sync: upsert all todo_owners (NON-destructive, by id).
+//
+// This used to delete-all-then-reinsert, which fired on every owner change
+// AND on every focus refresh (the pull re-triggers this push). Deleting owner
+// rows cascades the FK rules from migration 007 — ON DELETE SET NULL on
+// tasks/expenses/tab_history/running_tab created_by/approved_by/etc., and
+// ON DELETE CASCADE on app_permissions — silently wiping all attribution and
+// every permission grant. Upsert-by-id preserves those rows. Deletions are
+// propagated separately via deleteOwner() from the store.
 export async function syncOwners(owners: OwnerInsert[]): Promise<void> {
+  if (owners.length === 0) return;
+
   const supabase = getSupabaseClient();
-
-  // Delete all existing todo_owners
-  const { error: deleteError } = await supabase
+  const { error } = await supabase
     .from("todo_owners")
-    .delete()
-    .neq("id", "00000000-0000-0000-0000-000000000000"); // Delete all
+    .upsert(owners as never, { onConflict: "id" });
 
-  if (deleteError) {
-    console.error("Error deleting todo_owners:", deleteError);
-    throw deleteError;
-  }
-
-  // Insert all owners if any exist
-  if (owners.length > 0) {
-    const { error: insertError } = await supabase
-      .from("todo_owners")
-      .insert(owners as never);
-
-    if (insertError) {
-      console.error("Error inserting todo_owners:", insertError);
-      throw insertError;
-    }
+  if (error) {
+    console.error("Error upserting todo_owners:", error);
+    throw error;
   }
 }

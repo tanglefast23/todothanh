@@ -284,6 +284,15 @@
     min-height: 44px;
   }
 
+  /* iOS safe-area insets (notch / Dynamic Island / home indicator).
+     Requires viewport-fit=cover, which is set in app/layout.tsx. */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
+
   /* Enhanced focus ring for accessibility */
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;

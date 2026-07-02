@@ -58,7 +58,7 @@ export function TaskList({
     return (
       <div className="text-center py-12 text-muted-foreground">
         <p className="text-lg">No tasks yet.</p>
-        <p className="text-sm mt-1">Add your first task above.</p>
+        <p className="text-sm mt-1">Add one from the Entry tab.</p>
       </div>
     );
   }

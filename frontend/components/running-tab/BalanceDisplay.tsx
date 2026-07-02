@@ -1,5 +1,6 @@
 "use client";
 
+import { Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface BalanceDisplayProps {
@@ -36,14 +37,23 @@ export function BalanceDisplay({ amount, className, canEdit, onEdit, children }:
   return (
     <div
       className={cn(
-        "rounded-3xl py-7 px-6 flex flex-col gap-2",
+        "relative rounded-3xl py-7 px-6 flex flex-col gap-2",
         canEdit && "cursor-pointer active:scale-[0.99] transition-transform",
         className,
       )}
       style={{ background: "linear-gradient(to bottom right, #FF6B6B, #FF8E53, #FEB47B)" }}
       onDoubleClick={handleDoubleClick}
-      title={canEdit ? "Double-tap to adjust" : undefined}
     >
+      {canEdit && onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label="Adjust balance"
+          className="absolute top-4 right-4 flex size-10 items-center justify-center rounded-full bg-white/25 text-white transition-transform active:scale-95"
+        >
+          <Pencil className="size-[18px]" />
+        </button>
+      )}
       <p className="text-sm font-medium text-white/80 select-none">
         Current Balance
       </p>

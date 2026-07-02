@@ -8,6 +8,8 @@ import { persist } from "zustand/middleware";
 import type { Owner } from "@/types/owner";
 import { OWNER_STORAGE_KEY, UNLOCK_STATE_KEY } from "@/types/owner";
 import { hashPassword, verifyPassword, needsHashUpgrade } from "@/lib/crypto";
+import { deleteOwner as deleteOwnerFromSupabase } from "@/lib/supabase/queries/owners";
+import { retryWithBackoff } from "@/lib/supabase/sync/utils";
 
 // Special ID for guest users (no password, only sees public portfolios)
 export const GUEST_ID = "__guest__";
@@ -259,6 +261,12 @@ export const useOwnerStore = create<OwnerState>()(
         // Also remove from unlocked state
         const unlocked = getUnlockedOwnerIds().filter((oid) => oid !== id);
         setUnlockedOwnerIds(unlocked);
+
+        // Propagate the deletion to Supabase. syncOwners is now a non-destructive
+        // upsert, so removals must be sent explicitly (mirrors tasksStore.deleteTask).
+        retryWithBackoff(() => deleteOwnerFromSupabase(id), 3, "removeOwner").catch((error) => {
+          console.error("[Store] Failed to delete owner from Supabase after retries:", error);
+        });
       },
 
       updateOwnerName: (id, name) => {

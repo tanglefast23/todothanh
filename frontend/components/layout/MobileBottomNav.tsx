@@ -6,9 +6,13 @@ import { usePathname } from "next/navigation";
 import { Table2, Calculator, PenLine, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { playClickSound, haptic } from "@/lib/audio";
+import { useRunningTabStore } from "@/stores/runningTabStore";
 /** Mobile bottom navigation bar for TODO app */
 export const MobileBottomNav = memo(function MobileBottomNav() {
   const pathname = usePathname();
+  const pendingCount = useRunningTabStore(
+    (state) => state.expenses.filter((e) => e.status === "pending").length
+  );
   // Navigation items - all users get Entry now (non-master only sees calendar events)
   const navItems = useMemo(() => [
     { title: "Entry", href: "/entry", icon: PenLine },
@@ -29,6 +33,7 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
       <div className="flex items-center justify-around h-16">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
+          const showBadge = item.href === "/running-tab" && pendingCount > 0;
           return (
             <Link
               key={item.href}
@@ -41,15 +46,22 @@ export const MobileBottomNav = memo(function MobileBottomNav() {
                   ? "text-orange-500"
                   : "text-muted-foreground hover:text-foreground"
               )}
-              aria-label={item.title}
+              aria-label={showBadge ? `${item.title}, ${pendingCount} pending` : item.title}
               aria-current={isActive ? "page" : undefined}
             >
-              <item.icon
-                className={cn(
-                  "h-6 w-6 transition-transform duration-200",
-                  isActive && "scale-110"
+              <span className="relative">
+                <item.icon
+                  className={cn(
+                    "h-6 w-6 transition-transform duration-200",
+                    isActive && "scale-110"
+                  )}
+                />
+                {showBadge && (
+                  <span className="absolute -top-1.5 -right-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                    {pendingCount > 9 ? "9+" : pendingCount}
+                  </span>
                 )}
-              />
+              </span>
               <span className={cn(
                 "text-xs font-medium transition-colors duration-150",
                 isActive && "text-orange-500"

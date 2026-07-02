@@ -18,22 +18,26 @@ interface ExpenseListProps {
   expenses: Expense[];
   owners: { id: string; name: string }[];
   canApprove: boolean;
+  activeOwnerId?: string | null;
   onApprove: (id: string) => void;
   onApproveAll?: () => void;
   onReject: (id: string, reason: string) => void;
   onRejectAll?: (reason: string) => void;
   onAttachment: (id: string, url: string) => void;
+  onCancel?: (id: string) => void;
 }
 
 export function ExpenseList({
   expenses,
   owners,
   canApprove,
+  activeOwnerId,
   onApprove,
   onApproveAll,
   onReject,
   onRejectAll,
   onAttachment,
+  onCancel,
 }: ExpenseListProps) {
   // Rejection reason dialog state (single expense)
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -103,6 +107,7 @@ export function ExpenseList({
           <PendingApproval
             expenses={pending}
             canApprove={canApprove}
+            activeOwnerId={activeOwnerId}
             onApprove={onApprove}
             onApproveAll={onApproveAll}
             onReject={handleRejectClick}
@@ -112,6 +117,7 @@ export function ExpenseList({
               setTimeout(() => rejectAllReasonRef.current?.focus(), 50);
             } : undefined}
             onAttachment={onAttachment}
+            onCancel={onCancel}
           />
         )}
 
